@@ -1,0 +1,2106 @@
+--- Made By Scripterblabla 
+--- Don't Skid Lil Bro
+
+
+local OPTIONS = {
+	StartWeapon = "AK47",
+
+	Damage      = 46,
+	HeadDamage  = 73,
+	FireRate    = 600,
+	MagSize     = 30,
+	Scale       = 0.6,
+	JohnWickReloadStylish = true,
+	InspectDuration = 8,
+
+	PistolScale = 0.75,
+	Pistol = {
+		Damage       = 39,
+		DamageFar    = 19,
+		FalloffStart = 72,
+		FalloffEnd   = 450,
+		HeadMult     = 1.5,
+		FireRate     = 750,
+		MagSize      = 15,
+		AutoReload   = true,
+		TwoHanded    = true,
+		AimFOVMul    = 0.8,
+	},
+
+	LocalDamage = true,
+	Blood       = true,
+	Gore        = true,
+	BloodLifetime = 30,
+	GibLifetime   = 25,
+	FOV         = 70,
+	AimFOV      = 48,
+	SkinTextureId = nil,
+	ArmColor    = nil,
+
+	CrouchDepth = 1.6,
+
+	Bodycam       = true,
+	BodycamFOV    = 85,
+	BodycamAimFOV = 58,
+	BodycamDrop   = 0.4,
+	PeekDistance  = 1.2,
+	PeekRoll      = 0.22,
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+local StarterGui = game:GetService("StarterGui")
+local InsertService = game:GetService("InsertService")
+local ContentProvider = game:GetService("ContentProvider")
+local LP = Players.LocalPlayer
+local cam = workspace.CurrentCamera
+local genv = (getgenv and getgenv()) or _G
+
+if genv.AK47_Cleanup then pcall(genv.AK47_Cleanup) end
+
+local notifyGui, notifyConn
+
+local CHROME = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(22, 22, 25)),
+	ColorSequenceKeypoint.new(0.28, Color3.fromRGB(150, 153, 160)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(250, 251, 255)),
+	ColorSequenceKeypoint.new(0.72, Color3.fromRGB(118, 121, 128)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(22, 22, 25)),
+})
+
+local function showNotice(line1, line2, duration)
+	pcall(function() if notifyConn then notifyConn:Disconnect() end end)
+	pcall(function() if notifyGui then notifyGui:Destroy() end end)
+
+	local ng = Instance.new("ScreenGui")
+	ng.Name = "Scripterblabla_Notice"
+	ng.ResetOnSpawn = false
+	ng.IgnoreGuiInset = true
+	ng.DisplayOrder = 100
+	pcall(function() if syn and syn.protect_gui then syn.protect_gui(ng) end end)
+	ng.Parent = (gethui and gethui()) or LP:WaitForChild("PlayerGui")
+	notifyGui = ng
+
+	local W, H = 350, 90
+	local function round(inst, r)
+		local c = Instance.new("UICorner")
+		c.CornerRadius = r
+		c.Parent = inst
+	end
+
+	local card = Instance.new("CanvasGroup")
+	card.Name = "Card"
+	card.AnchorPoint = Vector2.new(0.5, 0)
+	card.Size = UDim2.fromOffset(W, H)
+	card.Position = UDim2.new(0.5, 0, 0, -H - 24)
+	card.BackgroundColor3 = Color3.new(1, 1, 1)
+	card.BorderSizePixel = 0
+	card.GroupTransparency = 1
+	card.Parent = ng
+	round(card, UDim.new(0, 18))
+
+	local bg = Instance.new("UIGradient")
+	bg.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(6, 6, 8)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(38, 39, 44)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 6, 8)),
+	})
+	bg.Rotation = 90
+	bg.Parent = card
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1.6
+	stroke.Color = Color3.new(1, 1, 1)
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = card
+	local sg = Instance.new("UIGradient")
+	sg.Color = CHROME
+	sg.Parent = stroke
+
+	local sheen = Instance.new("Frame")
+	sheen.Size = UDim2.fromScale(1, 1)
+	sheen.BackgroundColor3 = Color3.new(1, 1, 1)
+	sheen.BorderSizePixel = 0
+	sheen.Active = false
+	sheen.Parent = card
+	local shg = Instance.new("UIGradient")
+	shg.Rotation = 20
+	shg.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.42, 1),
+		NumberSequenceKeypoint.new(0.5, 0.84),
+		NumberSequenceKeypoint.new(0.58, 1),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	shg.Parent = sheen
+
+	local icon = Instance.new("Frame")
+	icon.AnchorPoint = Vector2.new(0.5, 0.5)
+	icon.Position = UDim2.fromOffset(40, 38)
+	icon.Size = UDim2.fromOffset(48, 48)
+	icon.BackgroundColor3 = Color3.fromRGB(14, 14, 16)
+	icon.BorderSizePixel = 0
+	icon.Parent = card
+	round(icon, UDim.new(1, 0))
+	local is = Instance.new("UIStroke")
+	is.Thickness = 2.2
+	is.Color = Color3.new(1, 1, 1)
+	is.Parent = icon
+	local ig = Instance.new("UIGradient")
+	ig.Color = CHROME
+	ig.Parent = is
+	local ilab = Instance.new("TextLabel")
+	ilab.BackgroundTransparency = 1
+	ilab.Size = UDim2.fromScale(1, 1)
+	ilab.Font = Enum.Font.GothamBlack
+	ilab.TextSize = 24
+	ilab.Text = "S"
+	ilab.TextColor3 = Color3.fromRGB(238, 241, 248)
+	ilab.Parent = icon
+
+	local DIM, LIGHT = Color3.fromRGB(118, 121, 130), Color3.fromRGB(255, 255, 255)
+	local function letters(parent, text, size)
+		local list = Instance.new("UIListLayout")
+		list.FillDirection = Enum.FillDirection.Horizontal
+		list.SortOrder = Enum.SortOrder.LayoutOrder
+		list.Parent = parent
+		local out = {}
+		for i = 1, #text do
+			local ch = text:sub(i, i)
+			local w = Instance.new("Frame")
+			w.BackgroundTransparency = 1
+			w.LayoutOrder = i
+			w.Parent = parent
+			if ch == " " then
+				w.Size = UDim2.fromOffset(math.floor(size * 0.32), 1)
+			else
+				w.AutomaticSize = Enum.AutomaticSize.X
+				w.Size = UDim2.new(0, 0, 1, 0)
+				local l = Instance.new("TextLabel")
+				l.BackgroundTransparency = 1
+				l.AutomaticSize = Enum.AutomaticSize.X
+				l.Size = UDim2.new(0, 0, 1, 0)
+				l.Font = Enum.Font.GothamBold
+				l.TextSize = size
+				l.TextXAlignment = Enum.TextXAlignment.Left
+				l.TextColor3 = DIM
+				l.Text = ch
+				l.Parent = w
+				table.insert(out, l)
+			end
+		end
+		return out
+	end
+	local row1 = Instance.new("Frame")
+	row1.BackgroundTransparency = 1
+	row1.Position = UDim2.fromOffset(78, 12)
+	row1.Size = UDim2.fromOffset(W - 92, 22)
+	row1.Parent = card
+	local row2 = Instance.new("Frame")
+	row2.BackgroundTransparency = 1
+	row2.Position = UDim2.fromOffset(78, 37)
+	row2.Size = UDim2.fromOffset(W - 92, 18)
+	row2.Parent = card
+	local L1 = letters(row1, line1, 18)
+	local L2 = letters(row2, line2, 14)
+
+	local N = 34
+	local waveBox = Instance.new("Frame")
+	waveBox.BackgroundTransparency = 1
+	waveBox.Position = UDim2.fromOffset(16, 62)
+	waveBox.Size = UDim2.fromOffset(W - 32, 16)
+	waveBox.Parent = card
+	local bars = {}
+	for i = 1, N do
+		local b = Instance.new("Frame")
+		b.AnchorPoint = Vector2.new(0.5, 1)
+		b.Position = UDim2.new((i - 0.5) / N, 0, 1, 0)
+		b.Size = UDim2.new(0.5 / N, 0, 0.3, 0)
+		b.BackgroundColor3 = LIGHT
+		b.BorderSizePixel = 0
+		b.Parent = waveBox
+		round(b, UDim.new(1, 0))
+		bars[i] = b
+	end
+
+	local track = Instance.new("Frame")
+	track.Position = UDim2.fromOffset(16, H - 9)
+	track.Size = UDim2.fromOffset(W - 32, 3)
+	track.BackgroundColor3 = Color3.fromRGB(34, 35, 40)
+	track.BorderSizePixel = 0
+	track.Parent = card
+	round(track, UDim.new(1, 0))
+	local fill = Instance.new("Frame")
+	fill.Size = UDim2.fromScale(1, 1)
+	fill.BackgroundColor3 = Color3.new(1, 1, 1)
+	fill.BorderSizePixel = 0
+	fill.Parent = track
+	round(fill, UDim.new(1, 0))
+	local fg = Instance.new("UIGradient")
+	fg.Color = CHROME
+	fg.Parent = fill
+
+	local start = tick()
+	local function waveText(list, t, amp, speed, step)
+		for i, l in ipairs(list) do
+			l.Position = UDim2.fromOffset(0, math.sin(t * speed - i * step) * amp)
+			local s = (math.sin(t * speed * 0.8 - i * step) + 1) / 2
+			l.TextColor3 = DIM:Lerp(LIGHT, s * s)
+		end
+	end
+	notifyConn = RunService.RenderStepped:Connect(function()
+		local t = tick() - start
+		sg.Rotation = (t * 120) % 360
+		ig.Rotation = (-t * 200) % 360
+		fg.Offset = Vector2.new(math.sin(t * 2) * 0.35, 0)
+		bg.Rotation = 90 + math.sin(t * 0.8) * 25
+		shg.Offset = Vector2.new(((t * 0.55) % 2) - 1, 0)
+		icon.Size = UDim2.fromOffset(48 + math.sin(t * 3) * 2, 48 + math.sin(t * 3) * 2)
+		waveText(L1, t, 2.4, 5, 0.45)
+		waveText(L2, t, 1.6, 5, 0.38)
+		for i, b in ipairs(bars) do
+			local v = (math.sin(t * 4.2 - i * 0.36) + 1) / 2
+			local v2 = (math.sin(t * 2.3 + i * 0.21) + 1) / 2
+			local h = 0.14 + 0.86 * (v * 0.7 + v2 * 0.3) ^ 1.4
+			b.Size = UDim2.new(0.5 / N, 0, h, 0)
+			b.BackgroundColor3 = DIM:Lerp(LIGHT, v * v)
+		end
+	end)
+
+	TweenService:Create(card, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 0, 0, 16)}):Play()
+	TweenService:Create(card, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
+	task.delay(0.7, function()
+		if ng.Parent then
+			TweenService:Create(fill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.fromScale(0, 1)}):Play()
+		end
+	end)
+	task.delay(0.7 + duration, function()
+		if not ng.Parent then return end
+		local tw = TweenService:Create(card, TweenInfo.new(0.55, Enum.EasingStyle.Quint, Enum.EasingDirection.In),
+			{Position = UDim2.new(0.5, 0, 0, -H - 24), GroupTransparency = 1})
+		tw:Play()
+		tw.Completed:Wait()
+		pcall(function() if notifyConn then notifyConn:Disconnect() end end)
+		pcall(function() ng:Destroy() end)
+	end)
+end
+
+local function rotOnly(cf) return cf - cf.Position end
+
+local AK_PARTS = {
+  {"MeshPart","Union",{MeshId="rbxassetid://450793522",TextureID="http://www.roblox.com/asset/?id=5002563156",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(3.03483,0.60289,0.228574)}},
+  {"MeshPart","Union",{MeshId="rbxassetid://449043388",TextureID="http://www.roblox.com/asset/?id=5002563156",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(2.502219,0.43007,0.186037)}},
+  {"MeshPart","Union",{MeshId="rbxassetid://449030747",TextureID="http://www.roblox.com/asset/?id=5002563156",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(3.170069,0.855653,0.267041)}},
+  {"MeshPart","Union",{MeshId="rbxassetid://449036123",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(4.13019,0.891,0.268)}},
+  {"MeshPart","Union",{MeshId="rbxassetid://449036904",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(0.440034,0.681837,0.178021)}},
+  {"MeshPart","Union",{MeshId="rbxassetid://449042001",TextureID="http://www.roblox.com/asset/?id=5002563156",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(2.522122,0.41481,0.216137)}},
+  {"MeshPart","Bolt",{MeshId="rbxassetid://448857606",TextureID="http://www.roblox.com/asset/?id=5002563156",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(163,162,165),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(2.151545,0.22004,0.27943)},{
+    {"Sound","BoltBack",{Looped=false,PlaybackSpeed=1,RollOffMaxDistance=30,RollOffMinDistance=10,RollOffMode=Enum.RollOffMode:FromValue(0),SoundId="rbxassetid://393678915",Volume=1}},
+    {"Sound","BoltForward",{Looped=false,PlaybackSpeed=1,RollOffMaxDistance=30,RollOffMinDistance=10,RollOffMode=Enum.RollOffMode:FromValue(0),SoundId="rbxassetid://393678926",Volume=1}}
+  }},
+  {"Part","FirePart",{Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(255,255,0),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=1,Size=Vector3.new(0.2,0.2,0.2)},{
+    {"ParticleEmitter","FlashFX3[Burst]",{Acceleration=Vector3.new(0,-1.5,10),Brightness=1,Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.new(0.647059,0.647059,0.647059)),ColorSequenceKeypoint.new(1,Color3.new(0.647059,0.647059,0.647059))}),Drag=0,EmissionDirection=Enum.NormalId:FromValue(5),Enabled=false,Lifetime=NumberRange.new(0.4,0.4),LightEmission=1,LightInfluence=0,LockedToPart=false,Orientation=Enum.ParticleOrientation:FromValue(0),Rate=200,RotSpeed=NumberRange.new(0,0),Rotation=NumberRange.new(0,0),Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.7,0),NumberSequenceKeypoint.new(1,0.7,0)}),Speed=NumberRange.new(50,50),SpreadAngle=Vector2.new(10,10),Texture="rbxassetid://241539438",Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.0125,0),NumberSequenceKeypoint.new(0.412718,0.91875,0.031009),NumberSequenceKeypoint.new(0.938903,0.95,0.05),NumberSequenceKeypoint.new(1,1,0)}),ZOffset=0}},
+    {"ParticleEmitter","FlashFX3[Front]",{Acceleration=Vector3.new(0,-1.5,10),Brightness=1,Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.new(1,0.666667,0.498039)),ColorSequenceKeypoint.new(1,Color3.new(1,0.666667,0.498039))}),Drag=0,EmissionDirection=Enum.NormalId:FromValue(5),Enabled=false,Lifetime=NumberRange.new(0.4,0.4),LightEmission=1,LightInfluence=0,LockedToPart=false,Orientation=Enum.ParticleOrientation:FromValue(0),Rate=200,RotSpeed=NumberRange.new(0,0),Rotation=NumberRange.new(0,0),Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.7,0),NumberSequenceKeypoint.new(1,0.7,0)}),Speed=NumberRange.new(10,10),SpreadAngle=Vector2.new(100,100),Texture="rbxassetid://241539438",Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.0125,0),NumberSequenceKeypoint.new(0.412718,0.91875,0.031009),NumberSequenceKeypoint.new(0.938903,0.95,0.05),NumberSequenceKeypoint.new(1,1,0)}),ZOffset=0}},
+    {"ParticleEmitter","FlashFX[Flash]",{Acceleration=Vector3.new(0,0,0),Brightness=1,Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.new(0.647059,0.647059,0.647059)),ColorSequenceKeypoint.new(1,Color3.new(0.647059,0.647059,0.647059))}),Drag=0,EmissionDirection=Enum.NormalId:FromValue(5),Enabled=false,Lifetime=NumberRange.new(0.05,0.075),LightEmission=1,LightInfluence=0,LockedToPart=false,Orientation=Enum.ParticleOrientation:FromValue(0),Rate=1000,RotSpeed=NumberRange.new(0,0),Rotation=NumberRange.new(0,90),Size=NumberSequence.new({NumberSequenceKeypoint.new(0,0.125,0.125),NumberSequenceKeypoint.new(1,0,0)}),Speed=NumberRange.new(50,50),SpreadAngle=Vector2.new(0,0),Texture="rbxassetid://257430870",Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.75,0.125),NumberSequenceKeypoint.new(1,1,0)}),ZOffset=0}},
+    {"PointLight","FlashFX[Light]",{Range=6,Brightness=10,Color=Color3.new(1,1,0.498039),Enabled=false,Shadows=true}},
+    {"Sound","Fire",{Looped=false,PlaybackSpeed=1,RollOffMaxDistance=10000,RollOffMinDistance=10,RollOffMode=Enum.RollOffMode:FromValue(0),SoundId="rbxassetid://412091790",Volume=1}}
+  }},
+  {"Part","AimPart",{Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(255,255,0),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=1,Size=Vector3.new(0.2,0.2,0.2)}},
+  {"Part","Grip",{Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(255,255,0),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=1,Size=Vector3.new(0.2,0.2,0.2)},{
+    {"Sound","Click",{Looped=false,PlaybackSpeed=1,RollOffMaxDistance=5,RollOffMinDistance=10,RollOffMode=Enum.RollOffMode:FromValue(0),SoundId="rbxassetid://484110242",Volume=0.5}},
+    {"Sound","MagIn",{Looped=false,PlaybackSpeed=0.925,RollOffMaxDistance=50,RollOffMinDistance=10,RollOffMode=Enum.RollOffMode:FromValue(0),SoundId="rbxassetid://627091207",Volume=1}},
+    {"Sound","MagOut",{Looped=false,PlaybackSpeed=0.9,RollOffMaxDistance=50,RollOffMinDistance=10,RollOffMode=Enum.RollOffMode:FromValue(0),SoundId="rbxassetid://627090947",Volume=1}},
+    {"Sound","Resupply",{Looped=false,PlaybackSpeed=1,RollOffMaxDistance=10,RollOffMinDistance=10,RollOffMode=Enum.RollOffMode:FromValue(0),SoundId="rbxassetid://292961243",Volume=0.4}}
+  }},
+  {"Part","Chamber",{Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(255,255,0),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=1,Size=Vector3.new(0.2,0.2,0.2)}},
+  {"MeshPart","Mag",{MeshId="rbxassetid://449031661",Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(0.966625,1.352289,0.12616)}},
+  {"Part","VerticalGrip",{Anchored=false,CanCollide=true,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(48,48,50),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=0,Size=Vector3.new(0.224741,0.708147,0.360434),_note="UnionOperation replaced by Part"}},
+  {"Part","VerticalGrip",{Anchored=false,CanCollide=false,CanQuery=true,CanTouch=true,CastShadow=true,Color=Color3.fromRGB(17,17,17),Massless=false,Material=Enum.Material:FromValue(272),Reflectance=0,Transparency=1,Size=Vector3.new(0.256994,0.256994,0.256994)}}
+}
+local AK_C0 = {
+  CFrame.new(-1.010475,-0.302671,-0.012894,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(-2.159447,-0.480834,-0.002945,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(0.489552,-0.189879,-0.002945,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(-0.007462,-0.210876,-0.00296,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(0.3395,0.176147,-0.000885,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(-2.343388,-0.446839,-0.002945,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(-1.51543,-0.491821,-0.08696,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(0.000092,-0.36499,3.567463,1,0,0,0,1,0,0,0,1),
+  CFrame.new(-0.000046,-0.66156,-0.580734,1,0,0,0,1,0,0,0,1),
+  nil,
+  CFrame.new(-0.247147,-0.48761,0.710667,1,0,0,0,1,0,0,0,1),
+  CFrame.new(-0.847427,0.290161,0.000122,0,0,-1,0,1,0,1,0,0),
+  CFrame.new(0.00238,0.043273,1.657932,1,0,0,0,1,0.000518,0,-0.000518,1),
+  CFrame.new(0.002884,-0.110534,1.657726,1,0,0,0,1,0.000518,0,-0.000518,1)
+}
+
+local PISTOL_PARTS, PISTOL_C0
+do
+	local TAN, NAVY, GREY = Color3.fromRGB(211, 190, 150), Color3.fromRGB(27, 42, 53), Color3.fromRGB(99, 95, 98)
+	local METAL, SAND = Enum.Material.Metal, Enum.Material.Sand
+	local function mesh(name, id, color, mat, size, transp)
+		return {"MeshPart", name, {MeshId = id, Color = color, Material = mat, Size = size, Transparency = transp or 0,
+			Anchored = false, CanCollide = false, Massless = false, Reflectance = 0}}
+	end
+	local function helper(name)
+		return {"Part", name, {Anchored = false, CanCollide = false, Transparency = 1, Size = Vector3.new(0.2, 0.2, 0.2)}}
+	end
+	local fire = helper("FirePart")
+	fire[4] = {
+		{"ParticleEmitter", "FlashFX[Flash]", {
+			Texture = "rbxassetid://242102147", Rate = 1000, Enabled = false, Lifetime = NumberRange.new(0.05, 0.075),
+			Speed = NumberRange.new(5, 5), SpreadAngle = Vector2.new(0, 0), LightEmission = 1, LightInfluence = 0,
+			Rotation = NumberRange.new(0, 360), EmissionDirection = Enum.NormalId.Front,
+			Color = ColorSequence.new(Color3.new(1, 1, 0.498039)),
+			Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.9), NumberSequenceKeypoint.new(1, 0.25)}),
+			Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(0.64, 0.9), NumberSequenceKeypoint.new(1, 1)})}},
+		{"ParticleEmitter", "FlashFX[Smoke]", {
+			Texture = "rbxassetid://244514423", Rate = 100, Enabled = false, Lifetime = NumberRange.new(0.5, 0.9),
+			Speed = NumberRange.new(5, 7), SpreadAngle = Vector2.new(20, 20), LightEmission = 0, LightInfluence = 1,
+			EmissionDirection = Enum.NormalId.Front,
+			Color = ColorSequence.new(Color3.new(0.27451, 0.27451, 0.27451)),
+			Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.15), NumberSequenceKeypoint.new(1, 0.7)}),
+			Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1)})}},
+		{"PointLight", "FlashFX[Light]", {Range = 6, Brightness = 10, Color = Color3.new(1, 1, 0.498039), Enabled = false, Shadows = true}},
+		{"Sound", "Fire", {Looped = false, PlaybackSpeed = 1, RollOffMaxDistance = 10000, RollOffMinDistance = 10, SoundId = "rbxassetid://801217802", Volume = 1}},
+	}
+	PISTOL_PARTS = {
+		mesh("Body",      "rbxassetid://1047106915", TAN,  METAL, Vector3.new(1.123489, 0.775883, 0.206233)),
+		mesh("Bolt",      "rbxassetid://1047107625", TAN,  METAL, Vector3.new(1.172604, 0.237449, 0.139258)),
+		mesh("Mag",       "rbxassetid://1047109061", NAVY, METAL, Vector3.new(0.418184, 0.758414, 0.102004)),
+		mesh("Bolt2",     "rbxassetid://1047108206", NAVY, METAL, Vector3.new(0.151609, 0.066169, 0.111588)),
+		mesh("Rail",      "rbxassetid://1047108678", NAVY, METAL, Vector3.new(0.858148, 0.188499, 0.125325)),
+		mesh("GripPanel", "rbxassetid://1047109377", GREY, SAND,  Vector3.new(0.401509, 0.614313, 0.207123)),
+		mesh("BoltBack",  "rbxassetid://1047107625", TAN,  METAL, Vector3.new(1.172604, 0.237449, 0.139258), 1),
+		mesh("BoltBack2", "rbxassetid://1047108206", NAVY, METAL, Vector3.new(0.151609, 0.066169, 0.111588), 1),
+		fire,
+		helper("AimPart"),
+	}
+	local function c(x, y, z) return CFrame.new(x, y, z, 0, 0, 1, 0, 1, 0, -1, 0, 0) end
+	PISTOL_C0 = {
+		c(0.0460052, 0.1343689, 0.0602341),
+		c(0.0460052, 0.4636078, -0.1285515),
+		c(0.0460052, 0.0648956, 0.3261948),
+		c(0.0460052, 0.5625763, 0.3398094),
+		c(0.0460052, 0.4498138, -0.3665428),
+		c(0.0460052, 0.0622559, 0.3561707),
+		c(0.0460052, 0.4636078, 0.0714455),
+		c(0.0460052, 0.5625763, 0.5398064),
+		CFrame.new(0.0460052, 0.4810486, -0.8155136),
+		CFrame.new(0.0460052, 0.5980072, 2.1907425),
+	}
+end
+
+local function makeMeshPart(meshId)
+	local ok, res = pcall(function()
+		return InsertService:CreateMeshPartAsync(meshId, Enum.CollisionFidelity.Box, Enum.RenderFidelity.Automatic)
+	end)
+	if ok and res then return res end
+
+	local mp = Instance.new("MeshPart")
+	local ok2 = pcall(function() mp.MeshId = meshId end)
+	if ok2 and mp.MeshId ~= "" then
+		pcall(function() ContentProvider:PreloadAsync({mp}) end)
+		return mp
+	end
+	warn("[Weapons] mesh failed: " .. tostring(meshId))
+	return mp
+end
+
+local function nativeSize(mp)
+	local ok, s = pcall(function() return mp.MeshSize end)
+	if ok and typeof(s) == "Vector3" and s.X > 0.001 and s.Y > 0.001 and s.Z > 0.001 then
+		return s
+	end
+	return nil
+end
+
+local function build(def, parent, S, trust)
+	local cls, name, props, kids = def[1], def[2], def[3], def[4]
+	local isMesh = (cls == "MeshPart")
+	local inst = isMesh and makeMeshPart(props.MeshId) or Instance.new(cls)
+	inst.Name = name
+
+	local sizeV = (typeof(props.Size) == "Vector3") and props.Size or nil
+	for k, v in pairs(props) do
+		if k ~= "_note" and not (isMesh and k == "MeshId") and not (k == "Size" and sizeV) then
+			if k == "TextureID" and OPTIONS.SkinTextureId and v ~= "" then v = OPTIONS.SkinTextureId end
+			pcall(function() inst[k] = v end)
+		end
+	end
+
+	if sizeV then
+		local size = sizeV
+		if isMesh and not trust then
+			local nat = nativeSize(inst)
+			if nat then
+				if (nat - sizeV).Magnitude > 0.03 * sizeV.Magnitude then
+					warn(("[Weapons] %s: stored size (%.2f, %.2f, %.2f) doesn't match the mesh (%.2f, %.2f, %.2f) - using the mesh's real size")
+						:format(name, sizeV.X, sizeV.Y, sizeV.Z, nat.X, nat.Y, nat.Z))
+				end
+				size = nat
+			end
+		end
+		pcall(function() inst.Size = size * S end)
+	end
+
+	if kids then for _, kd in ipairs(kids) do build(kd, inst, S, trust) end end
+	inst.Parent = parent
+	return inst
+end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "AK47_HUD"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 50
+pcall(function() if syn and syn.protect_gui then syn.protect_gui(gui) end end)
+gui.Parent = (gethui and gethui()) or LP:WaitForChild("PlayerGui")
+
+local model = Instance.new("Model")
+model.Name = "Viewmodel"
+local fxFolder = Instance.new("Folder")
+fxFolder.Name = "AK47_FX"
+fxFolder.Parent = workspace
+
+local function scaleSeq(seq, k)
+	local kps = {}
+	for i, kp in ipairs(seq.Keypoints) do
+		kps[i] = NumberSequenceKeypoint.new(kp.Time, kp.Value * k, kp.Envelope * k)
+	end
+	return NumberSequence.new(kps)
+end
+
+local function buildRig(cfg)
+	local S = cfg.scale
+	local rig = {cfg = cfg, S = S, name = cfg.name}
+	local m = Instance.new("Model")
+	m.Name = cfg.name
+	rig.model = m
+	rig.parts, rig.byName, rig.LOCAL = {}, {}, {}
+
+	for i, def in ipairs(cfg.parts) do
+		local p = build(def, m, S, cfg.trustSize)
+		p.Anchored = true
+		p.CanCollide, p.CanQuery, p.CanTouch = false, false, false
+		p.CastShadow = false
+		p.Massless = true
+		rig.parts[i] = p
+		rig.byName[p.Name] = rig.byName[p.Name] or p
+		local c0 = cfg.c0[i]
+		if c0 then
+			local b = cfg.inverse and c0:Inverse() or c0
+			rig.LOCAL[i] = CFrame.new(b.Position * S) * rotOnly(b)
+		else
+			rig.LOCAL[i] = CFrame.new()
+		end
+	end
+
+	local by = rig.byName
+	rig.fireP = by.FirePart
+	rig.mag = by.Mag
+	rig.magI = table.find(rig.parts, by.Mag)
+	rig.slideIdx = {}
+	for _, n in ipairs(cfg.slide) do table.insert(rig.slideIdx, table.find(rig.parts, by[n])) end
+	if cfg.lock then
+		rig.lockIdx = {}
+		for _, n in ipairs(cfg.lock) do table.insert(rig.lockIdx, table.find(rig.parts, by[n])) end
+	end
+	rig.slideK, rig.slideKick = cfg.slideK, cfg.slideKick
+
+	for _, d in ipairs(rig.fireP:GetDescendants()) do
+		if d:IsA("ParticleEmitter") then
+			pcall(function() d.Size = scaleSeq(d.Size, S) end)
+		elseif d:IsA("PointLight") then
+			d.Range = d.Range * S
+		end
+	end
+
+	rig.sfx = {}
+	for _, d in ipairs(m:GetDescendants()) do
+		if d:IsA("Sound") then rig.sfx[d.Name] = d end
+	end
+	for _, s in pairs(rig.sfx) do
+		s.RollOffMode = Enum.RollOffMode.Linear
+		s.Parent = gui
+	end
+
+	rig.aimLocal = rig.LOCAL[table.find(rig.parts, by.AimPart)].Position
+	rig.HIP = cfg.hip
+	rig.ADS = CFrame.new(-rig.aimLocal.X, -0.02 - rig.aimLocal.Y, -cfg.aimDist - rig.aimLocal.Z)
+	rig.magC = rig.LOCAL[rig.magI].Position / S
+	rig.MAGROT = rotOnly(rig.LOCAL[rig.magI])
+	local P = {}
+	for k, v in pairs(cfg.pts) do P[k] = v end
+	P.L_MW = rig.magC - Vector3.new(0, P.MAG_HOLD, 0)
+	P.L_INS = P.L_MW + P.insOff
+	rig.pts = P
+
+	for _, k in ipairs({"modes", "mode", "magSize", "fireRate", "spreadHip", "spreadAim", "recoilHip", "recoilAim",
+		"idleHand", "dropVel", "damage", "relPose", "sway", "autoReload", "sndPitch", "aimFovMul", "twoHanded",
+		"flourish", "twirlPivot", "iPivot", "iOff"}) do
+		rig[k] = cfg[k]
+	end
+	rig.ammo = cfg.magSize
+	rig.locked = false
+	return rig
+end
+
+local RIGS = {}
+
+RIGS.AK47 = buildRig({
+	name = "AK-47", parts = AK_PARTS, c0 = AK_C0, inverse = true, scale = OPTIONS.Scale or 0.6,
+	slide = {"Bolt"}, slideK = 0.35, slideKick = 18,
+	modes = {"AUTO", "SEMI"}, mode = 1,
+	magSize = OPTIONS.MagSize, fireRate = OPTIONS.FireRate,
+	spreadHip = 0.6, spreadAim = 0.15,
+	recoilHip = {rz = 2.2, rp = 0.9, cam = 0.6}, recoilAim = {rz = 1.4, rp = 0.5, cam = 0.35},
+	hip = CFrame.new(0.62, -0.6, -1.7) * CFrame.Angles(0, math.rad(8), 0), aimDist = 1.2,
+	idleHand = "HG", twoHanded = true,
+	iPivot = Vector3.new(0.11, -0.1, -0.8), iOff = Vector3.new(-0.5, 0.25, -0.1),
+	dropVel = Vector3.new(-1.8, 1.6, -3.2),
+	damage = function(_, head) return head and OPTIONS.HeadDamage or OPTIONS.Damage end,
+	relPose = function(tl, rk)
+		return CFrame.new(-0.30 * tl - 0.22 * rk, -0.12 * tl - 0.10 * rk, 0.12 * tl + 0.03 * rk)
+			* CFrame.Angles(0.15 * tl - 0.10 * rk, 0.30 * tl - 0.45 * rk, 0.20 * tl + 0.70 * rk)
+	end,
+	sway = function(t, kRaw, aimA)
+		local k = kRaw * (1 - aimA * 0.8)
+		return CFrame.new(math.sin(t * 7) * 0.04 * k, math.abs(math.cos(t * 7)) * 0.05 * k - 0.02 * k, 0)
+	end,
+	pts = {
+		R_HAND = Vector3.new(0, -0.2, 0.34),
+		L_HG   = Vector3.new(0, -0.05, -1.66),
+		MAG_HOLD = 0.3,
+		insOff = Vector3.new(0, -0.95, -0.45),
+		L_BLT  = Vector3.new(0.02, 0.74, -0.95),
+		OUT_CAM = Vector3.new(-0.40, -0.52, -1.05),
+	},
+})
+
+RIGS.PISTOL = buildRig({
+	name = "Desert Warrior", parts = PISTOL_PARTS, c0 = PISTOL_C0, inverse = false, trustSize = true,
+	scale = OPTIONS.PistolScale or 0.75,
+	slide = {"Bolt", "Bolt2"}, lock = {"BoltBack", "BoltBack2"}, slideK = 0.25, slideKick = 18,
+	modes = {"SEMI", "SAFE"}, mode = 1,
+	magSize = OPTIONS.Pistol.MagSize, fireRate = OPTIONS.Pistol.FireRate,
+	spreadHip = 0.9, spreadAim = 0.12,
+	recoilHip = {rz = 1.7, rp = 1.25, cam = 0.55}, recoilAim = {rz = 1.0, rp = 0.6, cam = 0.3},
+	hip = CFrame.new(0.55, -0.55, -1.5) * CFrame.Angles(math.rad(7), math.rad(9), 0), aimDist = 0.55,
+	idleHand = OPTIONS.Pistol.TwoHanded and "HG" or "IDLE", twoHanded = OPTIONS.Pistol.TwoHanded,
+	autoReload = OPTIONS.Pistol.AutoReload, sndPitch = 1.25, aimFovMul = OPTIONS.Pistol.AimFOVMul,
+	iPivot = Vector3.new(0.05, 0.14, -0.09), iOff = Vector3.new(-0.5, 0.3, 0.4),
+	dropVel = Vector3.new(-0.6, 0.3, -1.2),
+	damage = function(dist, head)
+		local o = OPTIONS.Pistol
+		local a = math.clamp((dist - o.FalloffStart) / math.max(1, o.FalloffEnd - o.FalloffStart), 0, 1)
+		local d = o.Damage + (o.DamageFar - o.Damage) * a
+		return head and d * o.HeadMult or d
+	end,
+	relPose = function(tl)
+		return CFrame.new(-0.40 * tl, 0.20 * tl, 0.15 * tl) * CFrame.Angles(0.25 * tl, 0.35 * tl, -0.65 * tl)
+	end,
+	twirlPivot = Vector3.new(0.05, 0.10, 0.12),
+	flourish = function(gl, gy, gr, gs)
+		if gl < 0.001 and gr == 0 and gs == 0 then return CFrame.new() end
+		local S = RIGS.PISTOL.S
+		local pv = Vector3.new(0.05, 0.10, 0.12) * S
+		return CFrame.new(-0.30 * gl, 0.34 * gl, 0.15 * gl) * CFrame.new(pv)
+			* CFrame.Angles(gs, 0, 0) * CFrame.Angles(0, 0, gr) * CFrame.new(-pv)
+	end,
+	sway = function(t, kRaw, aimA, speed)
+		if speed > 20 then
+			local a = t * 4.5 * 1.5
+			local pos = Vector3.new(math.sin(t * 3.5 * 1.5) * 4 / 30, math.sin(t * 9 * 1.5) * 1.5 / 40 + 0.2, 0)
+			return CFrame.new(pos) * CFrame.Angles(0, -math.rad(math.sin(a)) * 5 + 0.05235987755982989, math.rad(math.sin(a)) * 5)
+		end
+		local idleU = Vector3.new(math.sin(t / 2) / 70, math.sin(t * 5 / 4) / 70, math.sin(t * 3 / 4) / 70)
+		local idleA = Vector3.new(math.sin(t * 3 / 8) / 140, math.sin(t * 15 / 16) / 140, 0)
+		local walkU = Vector3.new(math.sin(t * 4.5) * 4 / 50, math.sin(t * 9) * 1.5 / 50, 0)
+		local walkA = Vector3.new(math.sin(t * 3) * 2 / 150, math.sin(t * 6) * 0.75 / 150, 0)
+		local rotU = math.rad(math.sin(t * 4.5)) * 2
+		local rotA = math.rad(math.sin(t * 3)) / 3
+		local idle = idleU:Lerp(idleA, aimA)
+		local walk = walkU:Lerp(walkA, aimA)
+		local rz = (rotU + (rotA - rotU) * aimA) * kRaw
+		return CFrame.new(idle + walk * kRaw) * CFrame.Angles(0, 0, rz)
+	end,
+	pts = {
+		R_HAND = Vector3.new(0.05, -0.18, 0.40),
+		L_HG   = Vector3.new(-0.34, -0.20, 0.08),
+		MAG_HOLD = 0.62,
+		insOff = Vector3.new(0, -0.8, 0),
+		L_BLT  = Vector3.new(-0.28, 0.47, 0.22),
+		R_REL  = Vector3.new(0.2, 0.33, 0),
+		OUT_CAM = Vector3.new(-0.5, -0.9, -1.0),
+	},
+})
+
+local cur = RIGS[OPTIONS.StartWeapon] or RIGS.AK47
+local sharedSfx = RIGS.AK47.sfx
+
+local function play(name, vol)
+	local rig = cur
+	local s = rig.sfx[name] or sharedSfx[name]
+	if not s then return end
+	local c = s:Clone()
+	if vol then c.Volume = vol end
+	if rig.sndPitch and name ~= "Fire" and not rig.sfx[name] then c.PlaybackSpeed = c.PlaybackSpeed * rig.sndPitch end
+	c.Parent = gui
+	c:Play()
+	Debris:AddItem(c, 4)
+end
+
+local function applyLock(rig)
+	if not rig.lockIdx then return end
+	for _, i in ipairs(rig.slideIdx) do rig.parts[i].Transparency = rig.locked and 1 or 0 end
+	for _, i in ipairs(rig.lockIdx) do rig.parts[i].Transparency = rig.locked and 0 or 1 end
+end
+
+local function armColor()
+	if OPTIONS.ArmColor then return OPTIONS.ArmColor end
+	local ch = LP.Character
+	local a = ch and (ch:FindFirstChild("Right Arm") or ch:FindFirstChild("RightUpperArm") or ch:FindFirstChild("RightHand"))
+	return a and a.Color or Color3.fromRGB(255, 204, 153)
+end
+local function makeArm(ball)
+	local a = Instance.new("Part")
+	a.Name = "Arm"
+	a.Anchored, a.CanCollide, a.CanQuery, a.CanTouch, a.CastShadow = true, false, false, false, false
+	a.Material = Enum.Material.Neon
+	a.TopSurface, a.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
+	if ball then a.Shape = Enum.PartType.Ball end
+	a.Parent = model
+	return a
+end
+local ARMS = {
+	R = {up = makeArm(), elbow = makeArm(true), fore = makeArm(), hand = makeArm()},
+	L = {up = makeArm(), elbow = makeArm(true), fore = makeArm(), hand = makeArm()},
+}
+
+local aimA = 0
+local aiming, held, reloading = false, false, false
+local inspecting = false
+local lastShot = 0
+local token = 0
+local clicked = false
+local swA, swPending = 0, nil
+local lastHandCam, lastRCam = nil, nil
+local fromHandCam, fromRCam, handBlend = nil, nil, 0
+
+local rl = {tilt = 0, rack = 0, rock = 0, boltZ = 0, magState = 0,
+	flip = 0, twist = 0, toss = 0, free = 0, rhi = 0,
+	iLift = 0, iPitch = 0, iYaw = 0, iRoll = 0,
+	gunLift = 0, gunYaw = 0, gunRoll = 0,
+	gunSpin = 0, twirl = 0,
+	w = {HG = 0, MW = 0, OUT = 0, PCH = 0, INS = 0, BLT = 0, REL = 0, SHW = 0, IDLE = 0}}
+local HAND_KEYS = {"HG", "MW", "OUT", "PCH", "INS", "BLT", "REL", "SHW", "IDLE"}
+local SCALARS = {"tilt", "rack", "rock", "boltZ", "flip", "twist", "toss", "free", "gunLift", "gunYaw", "gunRoll", "gunSpin", "twirl", "rhi", "iLift", "iPitch", "iYaw", "iRoll"}
+
+local function resetRL(rig)
+	for _, k in ipairs(SCALARS) do rl[k] = 0 end
+	rl.magState = 0
+	for _, k in ipairs(HAND_KEYS) do rl.w[k] = 0 end
+	rl.w[rig.idleHand] = 1
+end
+resetRL(cur)
+applyLock(cur)
+cur.model.Parent = model
+
+local sp = {rz = {0, 0}, rp = {0, 0}, cam = {0, 0}, bolt = {0, 0}}
+
+local function stepSpring(s, dt)
+	local k, d = 160, 15
+	s[2] = s[2] + (-s[1] * k - s[2] * d) * dt
+	s[1] = s[1] + s[2] * dt
+end
+
+local function label(props)
+	local l = Instance.new("TextLabel")
+	l.BackgroundTransparency = 1
+	l.Font = Enum.Font.GothamBold
+	l.TextColor3 = Color3.new(1, 1, 1)
+	l.TextStrokeTransparency = 0.5
+	for k, v in pairs(props) do l[k] = v end
+	l.Parent = gui
+	return l
+end
+local ammoLbl = label{Size = UDim2.new(0, 220, 0, 40), Position = UDim2.new(0.5, -110, 1, -70), TextSize = 28, Text = "30 | inf"}
+local titleLbl = label{Size = UDim2.new(0, 260, 0, 20), Position = UDim2.new(0.5, -130, 1, -92), TextSize = 16, Text = "AK-47"}
+local dot = Instance.new("Frame")
+dot.Size, dot.Position, dot.AnchorPoint = UDim2.new(0, 4, 0, 4), UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
+dot.BackgroundColor3, dot.BorderSizePixel = Color3.new(1, 1, 1), 0
+dot.Parent = gui
+local hit = label{Size = UDim2.new(0, 30, 0, 30), Position = UDim2.new(0.5, -15, 0.5, -15), TextSize = 30, Text = "X", TextColor3 = Color3.new(1, 0.2, 0.2), TextTransparency = 1, TextStrokeTransparency = 1}
+
+local modeBars = {}
+local function refreshHUD()
+	local rig = cur
+	local m = rig.modes[rig.mode]
+	for i, b in ipairs(modeBars) do
+		b.Visible = (m == "AUTO") or i == 2
+		b.BackgroundTransparency = (m == "SAFE") and 0.7 or 0
+	end
+	ammoLbl.Text = rig.ammo .. " | inf" .. (reloading and "  (reloading)" or "")
+	titleLbl.Text = rig.name .. "  [" .. m .. "]"
+end
+refreshHUD()
+
+local ICON_C = Color3.new(1, 1, 1)
+local BLACK = Color3.new(0, 0, 0)
+
+local function px(parent, x, y, w, h, o)
+	o = o or {}
+	local f = Instance.new("Frame")
+	f.AnchorPoint = Vector2.new(0.5, 0.5)
+	f.Position = UDim2.fromScale(x, y)
+	f.Size = UDim2.fromScale(w, h)
+	f.Rotation = o.rot or 0
+	f.BorderSizePixel = 0
+	f.Active = false
+	if o.ring then
+		f.BackgroundTransparency = 1
+		local s = Instance.new("UIStroke")
+		s.Color = ICON_C
+		s.Thickness = o.ring
+		s.Parent = f
+	else
+		f.BackgroundColor3 = o.color or ICON_C
+	end
+	if o.round then
+		local c = Instance.new("UICorner")
+		c.CornerRadius = UDim.new(o.round, 0)
+		c.Parent = f
+	end
+	f.Parent = parent
+	return f
+end
+
+local ICONS = {}
+
+function ICONS.fire(c)
+	px(c, 0.5, 0.28, 0.26, 0.36, {round = 0.5})
+	px(c, 0.5, 0.64, 0.32, 0.42)
+	px(c, 0.5, 0.455, 0.32, 0.04, {color = BLACK})
+	px(c, 0.5, 0.88, 0.40, 0.06)
+end
+
+function ICONS.aim(c)
+	px(c, 0.5, 0.5, 0.62, 0.62, {ring = 2, round = 0.5})
+	px(c, 0.5, 0.12, 0.06, 0.22)
+	px(c, 0.5, 0.88, 0.06, 0.22)
+	px(c, 0.12, 0.5, 0.22, 0.06)
+	px(c, 0.88, 0.5, 0.22, 0.06)
+	px(c, 0.5, 0.5, 0.09, 0.09, {round = 0.5})
+end
+
+function ICONS.reload(c)
+	local rot = math.rad(-12)
+	px(c, 0.46, 0.56, 0.30, 0.56, {rot = -12, round = 0.12})
+	px(c, 0.40, 0.25, 0.28, 0.10, {rot = -12, round = 0.3})
+	for _, dy in ipairs({-0.15, 0, 0.15}) do
+		px(c, 0.46 - dy * math.sin(rot), 0.56 + dy * math.cos(rot), 0.20, 0.03, {rot = -12, color = BLACK})
+	end
+end
+
+function ICONS.mode(c)
+	for i, x in ipairs({0.28, 0.5, 0.72}) do
+		modeBars[i] = px(c, x, 0.5, 0.13, 0.56, {round = 0.4})
+	end
+end
+
+function ICONS.crouch(c)
+	px(c, 0.42, 0.18, 0.20, 0.20, {round = 0.5})
+	px(c, 0.38, 0.45, 0.20, 0.36, {rot = 15, round = 0.2})
+	px(c, 0.52, 0.66, 0.34, 0.13, {round = 0.4})
+	px(c, 0.67, 0.78, 0.13, 0.28, {round = 0.4})
+	px(c, 0.74, 0.92, 0.22, 0.07, {round = 0.5})
+	px(c, 0.5, 0.97, 0.80, 0.03)
+end
+
+function ICONS.inspect(c)
+	px(c, 0.42, 0.42, 0.56, 0.56, {ring = 2, round = 0.5})
+	px(c, 0.78, 0.78, 0.34, 0.09, {rot = 45, round = 0.5})
+	px(c, 0.43, 0.39, 0.30, 0.09)
+	px(c, 0.34, 0.50, 0.08, 0.17, {rot = -12})
+end
+
+function ICONS.swap(c)
+	px(c, 0.44, 0.30, 0.64, 0.08, {round = 0.5})
+	px(c, 0.72, 0.22, 0.24, 0.08, {rot = 45, round = 0.5})
+	px(c, 0.72, 0.38, 0.24, 0.08, {rot = -45, round = 0.5})
+	px(c, 0.56, 0.70, 0.64, 0.08, {round = 0.5})
+	px(c, 0.28, 0.62, 0.24, 0.08, {rot = -45, round = 0.5})
+	px(c, 0.28, 0.78, 0.24, 0.08, {rot = 45, round = 0.5})
+end
+
+local function peekIcon(c, f)
+	local function X(x) return f == 1 and x or 1 - x end
+	px(c, X(0.26), 0.5, 0.16, 0.94)
+	px(c, X(0.62), 0.24, 0.22, 0.22, {round = 0.5})
+	px(c, X(0.54), 0.58, 0.20, 0.44, {rot = 14 * f, round = 0.2})
+	px(c, X(0.78), 0.86, 0.26, 0.05, {rot = 0})
+	px(c, X(0.86), 0.82, 0.12, 0.05, {rot = 40 * f})
+	px(c, X(0.86), 0.90, 0.12, 0.05, {rot = -40 * f})
+end
+function ICONS.peekL(c) peekIcon(c, -1) end
+function ICONS.peekR(c) peekIcon(c, 1) end
+
+local function mkButton(kind, pos, size)
+	local b = Instance.new("TextButton")
+	b.Text, b.Size, b.Position = "", UDim2.new(0, size, 0, size), pos
+	b.BackgroundColor3, b.BackgroundTransparency = Color3.new(0, 0, 0), 0.45
+	b.AutoButtonColor = false
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(1, 0)
+	c.Parent = b
+	local s = Instance.new("UIStroke")
+	s.Name = "Stroke"
+	s.Color = Color3.new(1, 1, 1)
+	s.Transparency = 0.5
+	s.Parent = b
+	local icon = Instance.new("Frame")
+	icon.Name = "Icon"
+	icon.BackgroundTransparency = 1
+	icon.AnchorPoint = Vector2.new(0.5, 0.5)
+	icon.Position = UDim2.fromScale(0.5, 0.5)
+	icon.Size = UDim2.fromScale(0.56, 0.56)
+	icon.Active = false
+	icon.Parent = b
+	ICONS[kind](icon)
+	b.Parent = gui
+	return b
+end
+local bFire   = mkButton("fire",   UDim2.new(1, -190, 0.5, -45),  90)
+local bAim    = mkButton("aim",    UDim2.new(1, -190, 0.5, 55),   70)
+local bRel    = mkButton("reload", UDim2.new(1, -275, 0.5, 55),   70)
+local bMode   = mkButton("mode",   UDim2.new(1, -275, 0.5, -35),  70)
+local bCrouch = mkButton("crouch", UDim2.new(1, -275, 0.5, -115), 70)
+local bPeekL  = mkButton("peekL",  UDim2.new(1, -445, 0.5, -35),  70)
+local bPeekR  = mkButton("peekR",  UDim2.new(1, -360, 0.5, -35),  70)
+local bSwap   = mkButton("swap",   UDim2.new(1, -360, 0.5, 55),   70)
+local bInsp   = mkButton("inspect", UDim2.new(1, -445, 0.5, 55),  70)
+refreshHUD()
+
+local function btnActive(b, on)
+	local s = b:FindFirstChild("Stroke")
+	if s then s.Transparency = on and 0 or 0.5 end
+	b.BackgroundTransparency = on and 0.15 or 0.45
+end
+
+local crouching, crouchA, crouchHum, crouchSpeed0, crouchDirty = false, 0, nil, nil, false
+local CROUCH_DEPTH = OPTIONS.CrouchDepth or 1.6
+
+local peekDir, peekA = 0, 0
+local PEEK_DIST = OPTIONS.PeekDistance or 1.2
+local PEEK_ROLL = OPTIONS.PeekRoll or 0.22
+local function setPeek(d)
+	peekDir = d
+	btnActive(bPeekL, d == -1)
+	btnActive(bPeekR, d == 1)
+end
+
+local BC = OPTIONS.Bodycam ~= false
+local BC_DROP = OPTIONS.BodycamDrop or 0.4
+local FOV_HIP = BC and (OPTIONS.BodycamFOV or 85) or OPTIONS.FOV
+local FOV_AIM = BC and (OPTIONS.BodycamAimFOV or 58) or OPTIONS.AimFOV
+local bodycamFX = nil
+local swP, swY = 0, 0
+
+if BC then
+	local function edge(pos, size, rot)
+		local f = Instance.new("Frame")
+		f.BackgroundColor3 = BLACK
+		f.BorderSizePixel = 0
+		f.Active = false
+		f.ZIndex = 0
+		f.Position, f.Size = pos, size
+		local g = Instance.new("UIGradient")
+		g.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1)})
+		g.Rotation = rot
+		g.Parent = f
+		f.Parent = gui
+	end
+	edge(UDim2.new(0, 0, 0, 0),   UDim2.new(0.22, 0, 1, 0), 0)
+	edge(UDim2.new(0.78, 0, 0, 0), UDim2.new(0.22, 0, 1, 0), 180)
+	edge(UDim2.new(0, 0, 0, 0),   UDim2.new(1, 0, 0.22, 0), 90)
+	edge(UDim2.new(0, 0, 0.78, 0), UDim2.new(1, 0, 0.22, 0), -90)
+
+	local flicker = Instance.new("Frame")
+	flicker.BackgroundColor3 = Color3.new(1, 1, 1)
+	flicker.BackgroundTransparency = 0.97
+	flicker.BorderSizePixel = 0
+	flicker.Active = false
+	flicker.ZIndex = 0
+	flicker.Size = UDim2.fromScale(1, 1)
+	flicker.Parent = gui
+
+	local recDot = Instance.new("Frame")
+	recDot.Size, recDot.Position = UDim2.new(0, 12, 0, 12), UDim2.new(0, 100, 0, 18)
+	recDot.BackgroundColor3, recDot.BorderSizePixel = Color3.fromRGB(255, 30, 30), 0
+	local rc = Instance.new("UICorner")
+	rc.CornerRadius = UDim.new(1, 0)
+	rc.Parent = recDot
+	recDot.Parent = gui
+	local recLbl = label{Size = UDim2.new(0, 220, 0, 24), Position = UDim2.new(0, 118, 0, 12), TextSize = 18, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Left, Text = "REC 00:00:00"}
+	local unitLbl = label{Size = UDim2.new(0, 260, 0, 16), Position = UDim2.new(0, 100, 0, 36), TextSize = 13, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 0.2, Text = "BODYCAM  |  UNIT 047"}
+	local stampLbl = label{Size = UDim2.new(0, 300, 0, 22), Position = UDim2.new(1, -310, 0, 12), TextSize = 16, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Right, Text = ""}
+
+	pcall(function()
+		local cc = Instance.new("ColorCorrectionEffect")
+		cc.Name = "AK47_Bodycam"
+		cc.Saturation, cc.Contrast, cc.Brightness = -0.28, 0.14, -0.02
+		cc.TintColor = Color3.fromRGB(232, 240, 232)
+		cc.Parent = game:GetService("Lighting")
+		bodycamFX = cc
+	end)
+
+	local startT = tick()
+	task.spawn(function()
+		while gui.Parent do
+			local e = math.floor(tick() - startT)
+			recLbl.Text = ("REC %02d:%02d:%02d"):format(math.floor(e / 3600), math.floor(e / 60) % 60, e % 60)
+			recDot.Visible = (math.floor(tick() * 1.2) % 2 == 0)
+			local ok, stamp = pcall(os.date, "%Y-%m-%d  %H:%M:%S")
+			stampLbl.Text = ok and stamp or ""
+			flicker.BackgroundTransparency = 0.955 + math.random() * 0.03
+			task.wait(0.08)
+		end
+	end)
+end
+
+local function setCrouch(on)
+	if crouching == on then return end
+	crouching = on
+	btnActive(bCrouch, on)
+	local h = crouchHum
+	if h then
+		pcall(function()
+			if on then
+				crouchSpeed0 = h.WalkSpeed
+				h.WalkSpeed = crouchSpeed0 * 0.5
+			elseif crouchSpeed0 then
+				h.WalkSpeed = crouchSpeed0
+				crouchSpeed0 = nil
+			end
+		end)
+	end
+end
+
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+local function findHumanoid(inst)
+	local m = inst
+	for _ = 1, 3 do
+		if not m then break end
+		local h = m:FindFirstChildOfClass("Humanoid")
+		if h then return h, m end
+		m = m.Parent
+	end
+end
+
+local function spark(pos, normal)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.Transparency = true, false, false, 1
+	p.Size = Vector3.new(0.2, 0.2, 0.2)
+	p.CFrame = CFrame.new(pos, pos + normal)
+	p.Parent = fxFolder
+	local e = Instance.new("ParticleEmitter")
+	e.Rate = 0
+	e.Lifetime = NumberRange.new(0.2, 0.4)
+	e.Speed = NumberRange.new(8, 18)
+	e.SpreadAngle = Vector2.new(35, 35)
+	e.Acceleration = Vector3.new(0, -25, 0)
+	e.LightEmission = 1
+	e.Color = ColorSequence.new(Color3.fromRGB(255, 200, 90))
+	e.Size = NumberSequence.new(0.15, 0)
+	e.EmissionDirection = Enum.NormalId.Front
+	e.Parent = p
+	e:Emit(8)
+	Debris:AddItem(p, 1)
+end
+
+local function bulletHole(pos, normal, parent)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery = true, false, false
+	p.Transparency = 1
+	p.Size = Vector3.new(0.4, 0.4, 0.02)
+	p.CFrame = CFrame.new(pos + normal * 0.01, pos + normal * 2)
+	p.Parent = fxFolder
+	local d = Instance.new("Decal")
+	d.Texture = "rbxassetid://64291977"
+	d.Face = Enum.NormalId.Front
+	d.Parent = p
+	Debris:AddItem(p, 8)
+end
+
+local function tracer(a, b)
+	local dist = (b - a).Magnitude
+	if dist < 1 then return end
+	local t = Instance.new("Part")
+	t.Anchored, t.CanCollide, t.CanQuery, t.CastShadow = true, false, false, false
+	t.Material = Enum.Material.Neon
+	t.Color = Color3.fromRGB(255, 220, 120)
+	t.Size = Vector3.new(0.06, 0.06, dist)
+	t.CFrame = CFrame.lookAt(a, b) * CFrame.new(0, 0, -dist / 2)
+	t.Parent = fxFolder
+	TweenService:Create(t, TweenInfo.new(0.12), {Transparency = 1}):Play()
+	Debris:AddItem(t, 0.2)
+end
+
+local function hitmarker()
+	hit.TextTransparency = 0
+	TweenService:Create(hit, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+	play("Click", 0.3)
+end
+
+local function muzzleFlash()
+	local fp = cur.fireP
+	for _, c in ipairs(fp:GetChildren()) do
+		if c.Name:sub(1, 7) == "FlashFX" then c.Enabled = true end
+	end
+	task.delay(1 / 30, function()
+		for _, c in ipairs(fp:GetChildren()) do
+			if c.Name:sub(1, 7) == "FlashFX" then c.Enabled = false end
+		end
+	end)
+end
+
+local goredList = {}
+local gored = setmetatable({}, {__mode = "k"})
+local localHP = setmetatable({}, {__mode = "k"})
+local goreHidden = {}
+local bloodHit, gibKill
+
+do
+	local BLOOD   = Color3.fromRGB(140, 4, 8)
+	local BLOOD_D = Color3.fromRGB(80, 0, 4)
+	local BONE    = Color3.fromRGB(235, 228, 205)
+	local rng = Random.new()
+	local goreRay = RaycastParams.new()
+	goreRay.FilterType = Enum.RaycastFilterType.Exclude
+	local splats = {}
+
+	local function setFilter(extra)
+		local f = {model, fxFolder}
+		if LP.Character then table.insert(f, LP.Character) end
+		if extra then table.insert(f, extra) end
+		for _, g in ipairs(goredList) do table.insert(f, g) end
+		goreRay.FilterDescendantsInstances = f
+	end
+
+	local function mkPart(size, color, opts)
+		local p = Instance.new("Part")
+		if opts and opts.ball then p.Shape = Enum.PartType.Ball end
+		if opts and opts.cyl then p.Shape = Enum.PartType.Cylinder end
+		p.Size = size
+		p.Color = color
+		p.Material = Enum.Material.SmoothPlastic
+		p.TopSurface, p.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
+		p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = true, false, false, false
+		pcall(function() p.CustomPhysicalProperties = PhysicalProperties.new(0.3, 0.6, 0.15) end)
+		return p
+	end
+
+	local function gibPart(size, color, cf, opts)
+		local p = mkPart(size, color, opts)
+		p.CFrame = cf
+		p.Parent = fxFolder
+		Debris:AddItem(p, OPTIONS.GibLifetime or 25)
+		return p
+	end
+
+	local function weldTo(root, p)
+		p.CanCollide = false
+		p.Massless = true
+		local w = Instance.new("WeldConstraint")
+		w.Part0, w.Part1 = root, p
+		w.Parent = root
+	end
+
+	local function launch(p, base, spread)
+		p.AssemblyLinearVelocity = base + Vector3.new(rng:NextNumber(-1, 1), rng:NextNumber(0.3, 1.2), rng:NextNumber(-1, 1)) * spread
+		p.AssemblyAngularVelocity = Vector3.new(rng:NextNumber(-14, 14), rng:NextNumber(-14, 14), rng:NextNumber(-14, 14))
+	end
+
+	local function mist(pos, dirVec, count, speedMin, speedMax)
+		local a = Instance.new("Part")
+		a.Anchored, a.CanCollide, a.CanQuery, a.CanTouch, a.Transparency = true, false, false, false, 1
+		a.Size = Vector3.new(0.2, 0.2, 0.2)
+		a.CFrame = CFrame.lookAt(pos, pos + dirVec)
+		a.Parent = fxFolder
+		local e = Instance.new("ParticleEmitter")
+		e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		e.Rate = 0
+		e.Lifetime = NumberRange.new(0.35, 0.8)
+		e.Speed = NumberRange.new(speedMin, speedMax)
+		e.SpreadAngle = Vector2.new(35, 35)
+		e.Acceleration = Vector3.new(0, -35, 0)
+		e.Color = ColorSequence.new(BLOOD)
+		e.LightEmission = 0
+		e.LightInfluence = 1
+		e.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0.1)})
+		e.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(0.7, 0.3), NumberSequenceKeypoint.new(1, 1)})
+		e.EmissionDirection = Enum.NormalId.Front
+		e.Parent = a
+		e:Emit(count)
+		Debris:AddItem(a, 1.5)
+	end
+
+	local function bleed(p, dur)
+		local e = Instance.new("ParticleEmitter")
+		e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		e.Rate = 35
+		e.Lifetime = NumberRange.new(0.4, 0.7)
+		e.Speed = NumberRange.new(2, 7)
+		e.SpreadAngle = Vector2.new(60, 60)
+		e.Acceleration = Vector3.new(0, -30, 0)
+		e.Color = ColorSequence.new(BLOOD)
+		e.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0.05)})
+		e.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1)})
+		e.Parent = p
+		Debris:AddItem(e, dur)
+	end
+
+	local function disc(pos, normal, diameter)
+		local p = Instance.new("Part")
+		p.Shape = Enum.PartType.Cylinder
+		p.Size = Vector3.new(0.03, diameter, diameter)
+		p.Color = (rng:NextNumber() < 0.3) and BLOOD_D or BLOOD
+		p.Material = Enum.Material.SmoothPlastic
+		p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = true, false, false, false, false
+		p.TopSurface, p.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
+		p.CFrame = CFrame.lookAt(pos + normal * rng:NextNumber(0.015, 0.035), pos + normal * 2) * CFrame.Angles(0, math.rad(90), 0)
+		p.Parent = fxFolder
+		table.insert(splats, p)
+		if #splats > 220 then
+			local o = table.remove(splats, 1)
+			if o then o:Destroy() end
+		end
+		Debris:AddItem(p, OPTIONS.BloodLifetime or 30)
+		return p
+	end
+
+	local function splatRay(origin, direction, extra, size)
+		setFilter(extra)
+		local res = workspace:Raycast(origin, direction, goreRay)
+		if not res then return nil end
+		local n = res.Normal
+		disc(res.Position, n, size * rng:NextNumber(0.7, 1.2))
+		local tan = n:Cross(math.abs(n.Y) > 0.9 and Vector3.xAxis or Vector3.yAxis).Unit
+		local bit = tan:Cross(n)
+		for _ = 1, rng:NextInteger(2, 4) do
+			local a = rng:NextNumber(0, 6.283)
+			local off = (tan * math.cos(a) + bit * math.sin(a)) * size * rng:NextNumber(0.4, 0.9)
+			disc(res.Position + off, n, size * rng:NextNumber(0.15, 0.4))
+		end
+		return res
+	end
+
+	bloodHit = function(res, dir, mdl, headshot)
+		local pos, n, d = res.Position, res.Normal, dir.Unit
+		mist(pos, n, headshot and 22 or 12, 8, 22)
+		mist(pos + d * 0.5, d, headshot and 18 or 8, 10, 26)
+		for _ = 1, headshot and 9 or 5 do
+			local p = mkPart(Vector3.new(0.16, 0.16, 0.16), BLOOD, {ball = true})
+			p.CFrame = CFrame.new(pos + n * 0.2)
+			p.Parent = fxFolder
+			p.AssemblyLinearVelocity = (n + d + Vector3.new(rng:NextNumber(-1, 1), rng:NextNumber(0, 1.2), rng:NextNumber(-1, 1))).Unit * rng:NextNumber(10, 28)
+			Debris:AddItem(p, 1.5)
+		end
+		splatRay(pos + d * 1.0, d * 30, mdl, headshot and 2.2 or 1.4)
+		if rng:NextNumber() < 0.5 then
+			splatRay(pos, Vector3.new(0, -12, 0), mdl, 1.3)
+		end
+	end
+
+	local function breakLimb(part, base, forceAxis)
+		local cf, size, color = part.CFrame, part.Size, part.Color
+		local axis = forceAxis
+		if not axis then
+			axis = "Y"
+			if size.X > size.Y and size.X >= size.Z then axis = "X"
+			elseif size.Z > size.Y and size.Z > size.X then axis = "Z" end
+		end
+		local L = size[axis]
+		local axisVec = cf[axis .. "Vector"]
+		local rot = rotOnly(cf)
+		local function dims(len, cross)
+			return Vector3.new(axis == "X" and len or size.X * cross, axis == "Y" and len or size.Y * cross, axis == "Z" and len or size.Z * cross)
+		end
+		local t = rng:NextNumber(0.35, 0.65)
+		local lenA, lenB = L * t, L * (1 - t)
+		local cutPos = cf.Position + axisVec * (-L / 2 + lenA)
+		local A = gibPart(dims(lenA, 1), color, CFrame.new(cf.Position + axisVec * (-L / 2 + lenA / 2)) * rot)
+		local B = gibPart(dims(lenB, 1), color, CFrame.new(cf.Position + axisVec * (L / 2 - lenB / 2)) * rot)
+		local fa = gibPart(dims(0.07, 0.9), BLOOD, CFrame.new(cutPos + axisVec * 0.035) * rot)
+		local fb = gibPart(dims(0.07, 0.9), BLOOD, CFrame.new(cutPos - axisVec * 0.035) * rot)
+		weldTo(A, fa)
+		weldTo(B, fb)
+
+		local crossMin
+		if axis == "X" then crossMin = math.min(size.Y, size.Z)
+		elseif axis == "Y" then crossMin = math.min(size.X, size.Z)
+		else crossMin = math.min(size.X, size.Y) end
+		local th = math.clamp(crossMin * 0.28, 0.1, 0.3)
+		local bl = math.clamp(L * 0.6, 0.45, 1.5)
+		local boneBase = CFrame.lookAt(cutPos, cutPos + axisVec) * CFrame.Angles(0, math.rad(90), 0)
+		local bone = gibPart(Vector3.new(bl, th, th), BONE, boneBase * CFrame.new(0.15 * bl, 0, 0), {cyl = true})
+		weldTo(A, bone)
+		local stub = gibPart(Vector3.new(0.45, th * 1.3, th * 1.3), BONE, boneBase * CFrame.new(-0.025, 0, 0), {cyl = true})
+		weldTo(B, stub)
+
+		launch(A, base * rng:NextNumber(0.5, 0.9), 12)
+		launch(B, base * rng:NextNumber(0.6, 1.0), 12)
+		bleed(A, 1.6)
+		bleed(B, 1.6)
+	end
+
+	local function burstTorso(part, base)
+		local cf = part.CFrame
+		local c = cf.Position
+		breakLimb(part, base, "Y")
+
+		local function at(off) return CFrame.new(c + cf:VectorToWorldSpace(off)) end
+		local function organ(size, color, off)
+			local p = gibPart(Vector3.new(size, size, size), color, at(off), {ball = true})
+			p.Reflectance = 0.12
+			launch(p, base * rng:NextNumber(0.4, 0.8), 14)
+		end
+		organ(0.55, Color3.fromRGB(150, 10, 20), Vector3.new(0.4, 0.4, -0.2))
+		organ(0.8, Color3.fromRGB(215, 125, 140), Vector3.new(-0.5, 0.5, 0))
+		organ(0.8, Color3.fromRGB(215, 125, 140), Vector3.new(0.5, 0.5, 0))
+		organ(0.75, Color3.fromRGB(110, 28, 30), Vector3.new(0.6, -0.4, 0))
+		organ(0.5, Color3.fromRGB(190, 110, 100), Vector3.new(-0.5, -0.3, 0))
+
+		local prevAtt
+		for i = 1, 8 do
+			local bead = gibPart(Vector3.new(0.34, 0.34, 0.34), Color3.fromRGB(225, 160, 150), at(Vector3.new((i - 4.5) * 0.25, -0.7, 0)), {ball = true})
+			bead.Reflectance = 0.1
+			local att = Instance.new("Attachment")
+			att.Parent = bead
+			if prevAtt then
+				local rope = Instance.new("RopeConstraint")
+				rope.Attachment0, rope.Attachment1 = prevAtt, att
+				rope.Length = 0.4
+				rope.Visible = false
+				rope.Parent = bead
+			end
+			prevAtt = att
+			launch(bead, base * 0.5, 10)
+		end
+
+		for _ = 1, 6 do
+			local p = gibPart(Vector3.new(0.12, 0.12, rng:NextNumber(0.6, 1)), BONE,
+				at(Vector3.new(rng:NextNumber(-0.6, 0.6), rng:NextNumber(-0.3, 0.7), rng:NextNumber(-0.3, 0.3))) * CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), 0))
+			launch(p, base * rng:NextNumber(0.5, 0.9), 14)
+		end
+
+		local root
+		for i = 1, 5 do
+			local v = gibPart(Vector3.new(0.3, 0.22, 0.3), BONE, at(Vector3.new(0, 0.5 - i * 0.25, 0.35)))
+			if root then weldTo(root, v) else root = v end
+		end
+		launch(root, base * 0.6, 8)
+
+		for _ = 1, 6 do
+			local s = rng:NextNumber(0.25, 0.45)
+			local p = gibPart(Vector3.new(s, s * 0.7, s), BLOOD_D, at(Vector3.new(rng:NextNumber(-0.6, 0.6), rng:NextNumber(-0.6, 0.6), 0)) * CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), 0))
+			launch(p, base * rng:NextNumber(0.4, 0.9), 14)
+		end
+	end
+
+	local function burstHead(part, base, shatter)
+		local cf = part.CFrame
+		local c = cf.Position
+		if not shatter then
+			local p = gibPart(part.Size, part.Color, cf)
+			bleed(p, 2)
+			launch(p, base, 8)
+			return
+		end
+		mist(c, base.Unit, 40, 10, 34)
+		mist(c, Vector3.yAxis, 25, 8, 22)
+		local function jitter(k) return Vector3.new(rng:NextNumber(-k, k), rng:NextNumber(-k, k), rng:NextNumber(-k, k)) end
+		for _ = 1, 9 do
+			local s = rng:NextNumber(0.18, 0.42)
+			local p = gibPart(Vector3.new(s, s * rng:NextNumber(0.5, 1), s * rng:NextNumber(0.5, 1)), BONE,
+				CFrame.new(c + jitter(0.4)) * CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), 0))
+			launch(p, base * rng:NextNumber(0.5, 1), 16)
+		end
+		for _ = 1, 4 do
+			local s = rng:NextNumber(0.35, 0.55)
+			local p = gibPart(Vector3.new(s, s, s), Color3.fromRGB(235, 160, 175), CFrame.new(c + jitter(0.25)), {ball = true})
+			p.Reflectance = 0.1
+			launch(p, base * rng:NextNumber(0.4, 0.8), 12)
+		end
+		for sgn = -1, 1, 2 do
+			local p = gibPart(Vector3.new(0.22, 0.22, 0.22), Color3.fromRGB(240, 240, 240), CFrame.new(c + cf:VectorToWorldSpace(Vector3.new(0.2 * sgn, 0.1, -0.3))), {ball = true})
+			launch(p, base * 0.7, 12)
+		end
+		for _ = 1, 5 do
+			local s = rng:NextNumber(0.2, 0.35)
+			local p = gibPart(Vector3.new(s, s, s), BLOOD_D, CFrame.new(c + jitter(0.3)))
+			launch(p, base * rng:NextNumber(0.4, 0.9), 14)
+		end
+	end
+
+	local function hideInst(i)
+		if i:IsA("BasePart") then
+			i.LocalTransparencyModifier = 1
+			table.insert(goreHidden, {i, "LocalTransparencyModifier", 0})
+		elseif i:IsA("Decal") or i:IsA("Texture") then
+			table.insert(goreHidden, {i, "Transparency", i.Transparency})
+			i.Transparency = 1
+		end
+	end
+
+	gibKill = function(mdl, dir, headshot)
+		gored[mdl] = true
+		local d = dir.Unit
+		local base = d * 22
+		local head = mdl:FindFirstChild("Head")
+
+		if headshot and head and head:IsA("BasePart") then
+			hideInst(head)
+			for _, ch in ipairs(head:GetChildren()) do hideInst(ch) end
+			for _, acc in ipairs(mdl:GetChildren()) do
+				if acc:IsA("Accessory") then
+					local h = acc:FindFirstChild("Handle")
+					local w = h and h:FindFirstChild("AccessoryWeld")
+					if w and (w.Part0 == head or w.Part1 == head) then
+						for _, x in ipairs(acc:GetDescendants()) do hideInst(x) end
+					end
+				end
+			end
+			burstHead(head, base, true)
+			return
+		end
+
+		table.insert(goredList, mdl)
+		local limbs = {}
+		for _, ch in ipairs(mdl:GetChildren()) do
+			if ch:IsA("BasePart") and ch.Name ~= "HumanoidRootPart" then table.insert(limbs, ch) end
+		end
+		for _, x in ipairs(mdl:GetDescendants()) do hideInst(x) end
+		local hum = mdl:FindFirstChildOfClass("Humanoid")
+		if hum then pcall(function() hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end) end
+
+		local center = (head and head.Position) or (mdl:GetPivot().Position)
+		local torsoPos
+		for _, p in ipairs(limbs) do
+			local n = p.Name
+			if n == "Head" then
+				burstHead(p, base, false)
+			elseif n == "Torso" or n == "UpperTorso" then
+				torsoPos = p.Position
+				burstTorso(p, base)
+			elseif math.max(p.Size.X, p.Size.Y, p.Size.Z) >= 0.9 then
+				breakLimb(p, base)
+			else
+				local g = gibPart(p.Size, p.Color, p.CFrame)
+				launch(g, base * 0.8, 10)
+			end
+		end
+		local c = torsoPos or center
+
+		for i = 0, 5 do
+			task.delay(i * 0.25, function()
+				if fxFolder.Parent then mist(c, Vector3.new(rng:NextNumber(-0.5, 0.5), 1, rng:NextNumber(-0.5, 0.5)), 18, 8, 24) end
+			end)
+		end
+		for _ = 1, 10 do
+			local v = (d * 0.6 + Vector3.new(rng:NextNumber(-1, 1), rng:NextNumber(-0.3, 1), rng:NextNumber(-1, 1))).Unit
+			splatRay(c, v * 16, mdl, rng:NextNumber(1.5, 3))
+		end
+		task.delay(0.8, function()
+			if not fxFolder.Parent then return end
+			setFilter(mdl)
+			local res = workspace:Raycast(c, Vector3.new(0, -30, 0), goreRay)
+			if res then
+				local p = disc(res.Position, res.Normal, 0.5)
+				TweenService:Create(p, TweenInfo.new(5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0.03, 7, 7)}):Play()
+			end
+		end)
+	end
+end
+
+local reload
+
+local function fire()
+	local rig = cur
+	if reloading or inspecting or swPending or swA > 0.05 then return end
+	if rig.modes[rig.mode] == "SAFE" then
+		if not clicked then clicked = true play("Click") end
+		return
+	end
+	local now = tick()
+	if now - lastShot < 60 / rig.fireRate then return end
+	if rig.ammo <= 0 then
+		if not clicked then
+			clicked = true
+			play("Click")
+			if rig.autoReload then reload() end
+		end
+		return
+	end
+	lastShot = now
+	rig.ammo = rig.ammo - 1
+	if rig.ammo <= 0 and rig.lockIdx then
+		rig.locked = true
+		applyLock(rig)
+	end
+	refreshHUD()
+	play("Fire")
+	muzzleFlash()
+
+	local spread = math.rad(aiming and rig.spreadAim or rig.spreadHip) * (crouching and 0.7 or 1)
+	local cf = cam.CFrame * CFrame.Angles((math.random() - 0.5) * spread, (math.random() - 0.5) * spread, 0)
+	local origin, dir = cf.Position, cf.LookVector * 1500
+	local ex = {model, fxFolder}
+	if LP.Character then table.insert(ex, LP.Character) end
+	for _, g in ipairs(goredList) do table.insert(ex, g) end
+	rayParams.FilterDescendantsInstances = ex
+	local res = workspace:Raycast(origin, dir, rayParams)
+	local endPos = res and res.Position or origin + dir
+	tracer(rig.fireP.Position, endPos)
+
+	if res then
+		local hum, mdl = findHumanoid(res.Instance)
+		if hum and hum.Health > 0 then
+			local isHead = res.Instance.Name == "Head"
+			local dmg = rig.damage((res.Position - origin).Magnitude, isHead)
+			local before = math.min(hum.Health, localHP[hum] or hum.Health)
+			local after = before - dmg
+			localHP[hum] = after
+			if OPTIONS.LocalDamage then
+				pcall(function() hum:TakeDamage(dmg) end)
+			end
+			hitmarker()
+			play("BodyHit", 0.6)
+
+			if OPTIONS.Blood then pcall(bloodHit, res, dir, mdl, isHead) end
+			if OPTIONS.Gore and before > 0 and after <= 0 and mdl and not gored[mdl] then
+				pcall(gibKill, mdl, dir, isHead)
+			end
+		else
+			spark(res.Position, res.Normal)
+			bulletHole(res.Position, res.Normal)
+		end
+	end
+
+	local rc = aiming and rig.recoilAim or rig.recoilHip
+	sp.rz[2] = sp.rz[2] + rc.rz
+	sp.rp[2] = sp.rp[2] + rc.rp
+	sp.cam[2] = sp.cam[2] + rc.cam
+	sp.bolt[2] = sp.bolt[2] + rig.slideKick
+end
+
+local lastMagCF = CFrame.new()
+
+local function dropMag()
+	local rig = cur
+	local m = rig.mag:Clone()
+	m.Anchored = true
+	m.Transparency = 0
+	m.CFrame = lastMagCF
+	m.Parent = fxFolder
+	local vel = cam.CFrame:VectorToWorldSpace(rig.dropVel)
+	local spin = Vector3.new(math.random() * 20 - 10, math.random() * 20 - 10, math.random() * 20 - 10)
+	task.spawn(function()
+		local t = 0
+		while t < 0.9 and m.Parent do
+			local dt = RunService.Heartbeat:Wait()
+			t = t + dt
+			vel = vel + Vector3.new(0, -50, 0) * dt
+			m.CFrame = CFrame.new(m.Position + vel * dt) * (rotOnly(m.CFrame) * CFrame.Angles(spin.X * dt, spin.Y * dt, spin.Z * dt))
+			if t > 0.5 then m.Transparency = math.clamp((t - 0.5) / 0.4, 0, 1) end
+		end
+		m:Destroy()
+	end)
+end
+
+local EASE = {
+	smooth = function(a) return a * a * (3 - 2 * a) end,
+	out    = function(a) return 1 - (1 - a) * (1 - a) end,
+	inn    = function(a) return a * a end,
+	lin    = function(a) return a end,
+}
+
+RIGS.AK47.reloadSeq = function(phase)
+	local STYLE = OPTIONS.JohnWickReloadStylish ~= false
+	local f = STYLE and 0.78 or 1
+	if not phase(0.32 * f, {tilt = 1, hand = "MW"}, "out") then return false end
+	rl.magState = 1
+	if not phase(0.10 * f, {rock = 0.25}) then return false end
+	play("MagOut")
+	if not phase(0.28 * f, {hand = "OUT", rock = 0.55}, "inn") then return false end
+	dropMag()
+	rl.magState = 2
+	if not phase(0.22 * f, {hand = "PCH"}) then return false end
+	rl.rock = 0.1
+	rl.magState = 1
+	if not phase(0.12 * f, {}) then return false end
+	if not phase(0.32 * f, {hand = "INS", rock = 0.5}) then return false end
+	play("MagIn")
+	if not phase(0.14 * f, {hand = "MW", rock = 0}, "out") then return false end
+	rl.magState = 0
+	sp.rp[2] = sp.rp[2] + (STYLE and 0.95 or 0.6)
+	sp.cam[2] = sp.cam[2] + (STYLE and 0.45 or 0.3)
+	if not phase(0.34 * f, {rack = 1, hand = "BLT"}) then return false end
+	play("BoltBack")
+	if not phase(0.16 * f, {boltZ = 0.7}, "out") then return false end
+	play("BoltForward")
+	if not phase(0.09 * f, {boltZ = 0}, "inn") then return false end
+	sp.rz[2] = sp.rz[2] + (STYLE and 1.1 or 0.8)
+	sp.cam[2] = sp.cam[2] + (STYLE and 0.35 or 0.2)
+	if not phase(0.45 * f, {tilt = 0, rack = 0, hand = "HG"}, "out") then return false end
+	return true
+end
+
+RIGS.PISTOL.reloadSeq = function(phase)
+	local rig = RIGS.PISTOL
+	local STYLE = OPTIONS.JohnWickReloadStylish ~= false
+	local wasEmpty = rig.ammo <= 0
+	local k = wasEmpty and (1.6 / 1.3) or (1.3 / 0.9)
+	if STYLE then k = k * 0.8 end
+	if not phase(0.20 * k, {tilt = 1, hand = "MW", rock = 0, rhi = 1}, "out") then return false end
+	rl.magState = 1
+	play("MagOut")
+	if not phase(0.06 * k, {hand = "INS", rock = 0}, "lin") then return false end
+	if not phase(0.06 * k, {hand = "OUT", rock = 0.5}, "lin") then return false end
+	dropMag()
+	rl.magState = 2
+	if not phase(0.13 * k, {hand = "PCH"}) then return false end
+	rl.rock = 0.1
+	rl.magState = 1
+	if not phase(0.20 * k, {hand = "INS", rock = 0}) then return false end
+	play("MagIn")
+	if not phase(0.10 * k, {hand = "MW", rock = 0}, STYLE and "inn" or "out") then return false end
+	rl.magState = 0
+	sp.rp[2] = sp.rp[2] + (STYLE and 0.9 or 0.5)
+	sp.cam[2] = sp.cam[2] + (STYLE and 0.45 or 0.25)
+	if STYLE then
+		if not phase(0.14 * k, {hand = "BLT"}) then return false end
+		play("BoltBack")
+		if not phase(0.07 * k, {boltZ = 0.45}, "out") then return false end
+		play("BoltForward")
+		if rig.locked then
+			rig.locked = false
+			applyLock(rig)
+		end
+		if not phase(0.04 * k, {boltZ = 0}, "inn") then return false end
+		sp.rz[2] = sp.rz[2] + 0.7
+		sp.rp[2] = sp.rp[2] + 0.3
+		sp.cam[2] = sp.cam[2] + 0.25
+	elseif rig.locked then
+		rig.locked = false
+		applyLock(rig)
+		play("BoltForward")
+		sp.bolt[1] = 0.2 / rig.slideK
+		sp.rz[2] = sp.rz[2] + 0.5
+	end
+	if not phase(0.24 * k, {tilt = 0, rhi = 0, hand = rig.idleHand}, "out") then return false end
+	return true
+end
+
+RIGS.AK47.inspectSeq = function(phase)
+	local rig = RIGS.AK47
+	local f = (OPTIONS.InspectDuration or 8) / 8
+	if not phase(0.6 * f, {iLift = 1, iPitch = 0.15, iYaw = -0.3, hand = "HG"}, "out") then return false end
+	if not phase(0.7 * f, {iYaw = -1.15, iPitch = 0, hand = "REL"}) then return false end
+	if not phase(0.3 * f, {hand = "BLT"}) then return false end
+	play("BoltBack")
+	if not phase(0.3 * f, {boltZ = 0.7}, "out") then return false end
+	if not phase(0.6 * f, {iPitch = 0.3}) then return false end
+	play("BoltForward")
+	if not phase(0.15 * f, {boltZ = 0}, "inn") then return false end
+	sp.rz[2] = sp.rz[2] + 0.5
+	sp.cam[2] = sp.cam[2] + 0.2
+	if not phase(0.55 * f, {iPitch = 1, hand = "REL"}) then return false end
+	if not phase(0.8 * f, {iYaw = -1.35, iPitch = 1.1}) then return false end
+	if not phase(0.9 * f, {iYaw = -1.15, iPitch = -1, hand = "MW"}) then return false end
+	if not phase(0.7 * f, {iYaw = 1.15, iPitch = 0, hand = "REL"}) then return false end
+	if not phase(0.6 * f, {iYaw = 1.25}) then return false end
+	if not phase(0.9 * f, {iRoll = math.pi * 2}) then return false end
+	rl.iRoll = 0
+	if not phase(0.9 * f, {iLift = 0, iYaw = 0, iPitch = 0, hand = "HG"}, "out") then return false end
+	return true
+end
+
+RIGS.PISTOL.inspectSeq = function(phase)
+	local rig = RIGS.PISTOL
+	local f = (OPTIONS.InspectDuration or 8) / 8
+	if not phase(0.55 * f, {iLift = 1, iPitch = 0.12, iYaw = -0.25}, "out") then return false end
+	if not phase(0.6 * f, {iYaw = -1, iPitch = 0, hand = "REL"}) then return false end
+	if not phase(0.3 * f, {hand = "BLT"}) then return false end
+	play("BoltBack")
+	if not phase(0.28 * f, {boltZ = 0.45}, "out") then return false end
+	if not phase(0.82 * f, {iPitch = 0.45}) then return false end
+	play("BoltForward")
+	if not phase(0.12 * f, {boltZ = 0}, "inn") then return false end
+	sp.rz[2] = sp.rz[2] + 0.5
+	sp.cam[2] = sp.cam[2] + 0.2
+	if not phase(0.58 * f, {iPitch = 1, hand = "REL"}) then return false end
+	if not phase(0.5 * f, {iPitch = -0.9, iYaw = -0.7, hand = "MW", rhi = 1}) then return false end
+	rl.magState = 1
+	play("MagOut")
+	if not phase(0.22 * f, {hand = "INS", rock = 0}, "lin") then return false end
+	if not phase(0.35 * f, {}) then return false end
+	play("MagIn")
+	if not phase(0.2 * f, {hand = "MW"}, "inn") then return false end
+	rl.magState = 0
+	sp.rp[2] = sp.rp[2] + 0.5
+	sp.cam[2] = sp.cam[2] + 0.25
+	if not phase(0.7 * f, {iPitch = 0, iYaw = 1, rhi = 0, hand = "REL"}) then return false end
+	if not phase(0.75 * f, {iYaw = 1.15}) then return false end
+	if not phase(1.13 * f, {iRoll = math.pi * 2}) then return false end
+	rl.iRoll = 0
+	if not phase(0.9 * f, {iLift = 0, iYaw = 0, iPitch = 0, hand = rig.idleHand}, "out") then return false end
+	return true
+end
+
+local function cancelInspect()
+	if not inspecting then return false end
+	token = token + 1
+	local my = token
+	local from, fromW = {}, {}
+	for _, k in ipairs(SCALARS) do from[k] = rl[k] end
+	for _, k in ipairs(HAND_KEYS) do fromW[k] = rl.w[k] end
+	rl.magState = 0
+	task.spawn(function()
+		local t0 = tick()
+		while token == my do
+			local a = math.clamp((tick() - t0) / 0.25, 0, 1)
+			local e = EASE.smooth(a)
+			for _, k in ipairs(SCALARS) do rl[k] = from[k] * (1 - e) end
+			for _, k in ipairs(HAND_KEYS) do
+				local to = (k == cur.idleHand) and 1 or 0
+				rl.w[k] = fromW[k] + (to - fromW[k]) * e
+			end
+			if a >= 1 then break end
+			RunService.RenderStepped:Wait()
+		end
+		if token == my then
+			resetRL(cur)
+			inspecting = false
+		end
+	end)
+	return true
+end
+
+reload = function()
+	if cancelInspect() then return end
+	local rig = cur
+	if reloading or swPending or rig.ammo >= rig.magSize then return end
+	reloading, aiming = true, false
+	token = token + 1
+	local my = token
+	refreshHUD()
+
+	task.spawn(function()
+		local function phase(dur, tgt, easing)
+			local from = {}
+			for _, k in ipairs(SCALARS) do from[k] = rl[k] end
+			local fromW = {}
+			for _, k in ipairs(HAND_KEYS) do fromW[k] = rl.w[k] end
+			local ef = EASE[easing or "smooth"]
+			local t0 = tick()
+			while true do
+				if token ~= my then return false end
+				local a = math.clamp((tick() - t0) / dur, 0, 1)
+				local e = ef(a)
+				for _, k in ipairs(SCALARS) do
+					if tgt[k] ~= nil then rl[k] = from[k] + (tgt[k] - from[k]) * e end
+				end
+				if tgt.hand then
+					for _, k in ipairs(HAND_KEYS) do
+						local to = (k == tgt.hand) and 1 or 0
+						rl.w[k] = fromW[k] + (to - fromW[k]) * e
+					end
+				end
+				if a >= 1 then return true end
+				RunService.RenderStepped:Wait()
+			end
+		end
+
+		if not rig.reloadSeq(phase) then return end
+
+		resetRL(rig)
+		rig.ammo = rig.magSize
+		reloading = false
+		clicked = false
+		refreshHUD()
+	end)
+end
+
+local function inspect()
+	if cancelInspect() then return end
+	local rig = cur
+	if reloading or swPending or swA > 0.05 or not rig.inspectSeq then return end
+	inspecting, aiming = true, false
+	token = token + 1
+	local my = token
+	task.spawn(function()
+		local function phase(dur, tgt, easing)
+			local from = {}
+			for _, k in ipairs(SCALARS) do from[k] = rl[k] end
+			local fromW = {}
+			for _, k in ipairs(HAND_KEYS) do fromW[k] = rl.w[k] end
+			local ef = EASE[easing or "smooth"]
+			local t0 = tick()
+			while true do
+				if token ~= my then return false end
+				local a = math.clamp((tick() - t0) / dur, 0, 1)
+				local e = ef(a)
+				for _, k in ipairs(SCALARS) do
+					if tgt[k] ~= nil then rl[k] = from[k] + (tgt[k] - from[k]) * e end
+				end
+				if tgt.hand then
+					for _, k in ipairs(HAND_KEYS) do
+						local to = (k == tgt.hand) and 1 or 0
+						rl.w[k] = fromW[k] + (to - fromW[k]) * e
+					end
+				end
+				if a >= 1 then return true end
+				RunService.RenderStepped:Wait()
+			end
+		end
+
+		if not rig.inspectSeq(phase) then return end
+
+		resetRL(rig)
+		inspecting = false
+	end)
+end
+
+local function toggleMode()
+	local rig = cur
+	rig.mode = rig.mode % #rig.modes + 1
+	play("Click")
+	refreshHUD()
+end
+
+local function switchTo(r)
+	if not r or r == cur or swPending then return end
+	swPending = r
+	aiming = false
+end
+
+local function doSwap(r)
+	token = token + 1
+	reloading, clicked = false, false
+	inspecting = false
+	cur.model.Parent = nil
+	resetRL(cur)
+	cur = r
+	resetRL(cur)
+	applyLock(cur)
+	cur.model.Parent = model
+	handBlend = (lastHandCam and lastRCam) and 1 or 0
+	fromHandCam, fromRCam = lastHandCam, lastRCam
+	refreshHUD()
+	play("Click", 0.5)
+end
+
+local function nextWeapon()
+	switchTo(cur == RIGS.AK47 and RIGS.PISTOL or RIGS.AK47)
+end
+
+local conns = {}
+local function on(sig, fn) table.insert(conns, sig:Connect(fn)) end
+
+local function press()
+	held = true
+	clicked = false
+	if cancelInspect() then return end
+	if cur.modes[cur.mode] ~= "AUTO" then fire() end
+end
+local function release() held = false end
+local function isPress(i) return i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch end
+
+on(bFire.InputBegan, function(i) if isPress(i) then press() end end)
+on(bFire.InputEnded, function(i) if isPress(i) then release() end end)
+on(bAim.InputBegan, function(i) if isPress(i) and not cancelInspect() then aiming = not aiming end end)
+on(bRel.InputBegan, function(i) if isPress(i) then reload() end end)
+on(bMode.InputBegan, function(i) if isPress(i) then toggleMode() end end)
+on(bCrouch.InputBegan, function(i) if isPress(i) then setCrouch(not crouching) end end)
+on(bSwap.InputBegan, function(i) if isPress(i) then nextWeapon() end end)
+on(bInsp.InputBegan, function(i) if isPress(i) then inspect() end end)
+on(bPeekL.InputBegan, function(i) if isPress(i) then setPeek(-1) end end)
+on(bPeekL.InputEnded, function(i) if isPress(i) and peekDir == -1 then setPeek(0) end end)
+on(bPeekR.InputBegan, function(i) if isPress(i) then setPeek(1) end end)
+on(bPeekR.InputEnded, function(i) if isPress(i) and peekDir == 1 then setPeek(0) end end)
+
+on(UIS.InputBegan, function(i, gp)
+	if gp then return end
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then press()
+	elseif i.UserInputType == Enum.UserInputType.MouseButton2 then aiming = not cancelInspect()
+	elseif i.KeyCode == Enum.KeyCode.R then reload()
+	elseif i.KeyCode == Enum.KeyCode.B then toggleMode()
+	elseif i.KeyCode == Enum.KeyCode.C then setCrouch(not crouching)
+	elseif i.KeyCode == Enum.KeyCode.V then nextWeapon()
+	elseif i.KeyCode == Enum.KeyCode.One then switchTo(RIGS.AK47)
+	elseif i.KeyCode == Enum.KeyCode.Two then switchTo(RIGS.PISTOL)
+	elseif i.KeyCode == Enum.KeyCode.F then inspect()
+	elseif i.KeyCode == Enum.KeyCode.Q then setPeek(-1)
+	elseif i.KeyCode == Enum.KeyCode.E then setPeek(1) end
+end)
+on(UIS.InputEnded, function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then release()
+	elseif i.UserInputType == Enum.UserInputType.MouseButton2 then aiming = false
+	elseif i.KeyCode == Enum.KeyCode.Q and peekDir == -1 then setPeek(0)
+	elseif i.KeyCode == Enum.KeyCode.E and peekDir == 1 then setPeek(0) end
+end)
+
+local REL_CAM  = Vector3.new(-0.55, -0.50, -1.1)
+local SHOW_CAM = Vector3.new(-0.42, -0.10, -1.05)
+local POUCH    = Vector3.new(-0.95, -0.85, -1.0)
+local IDLE_CAM = Vector3.new(-1.3, -1.7, -0.8)
+
+local HAND_SIZE  = Vector3.new(0.4, 0.34, 0.44)
+local ARM_BONE   = 1.55
+local SHOULDER_R = Vector3.new(1.25, -1.7, 0.9)
+local SHOULDER_L = Vector3.new(-1.25, -1.7, 0.9)
+local POLE_R     = Vector3.new(0.9, -1, 0.1)
+local POLE_L     = Vector3.new(-0.9, -1, 0.1)
+local DARK       = Color3.new(0, 0, 0)
+
+local hiddenList, hiddenT = {}, 0
+local t0 = tick()
+
+local function bone(p, a, b, thick)
+	local d = (b - a).Magnitude
+	p.Size = Vector3.new(thick, thick, math.max(d, 0.01))
+	p.CFrame = CFrame.lookAt(a, b) * CFrame.new(0, 0, -d / 2)
+end
+
+local function placeArm(A, shoulder, to, pole, color, visible, handScale)
+	local d = to - shoulder
+	local dist = math.max(d.Magnitude, 0.01)
+	local dir = d / dist
+	local pv = pole - dir * pole:Dot(dir)
+	pv = (pv.Magnitude > 1e-3) and pv.Unit or Vector3.yAxis
+	local h = (dist < 2 * ARM_BONE) and math.sqrt(ARM_BONE * ARM_BONE - dist * dist / 4) or 0
+	local elbow = shoulder + dir * (dist / 2) + pv * h
+
+	local sleeve, skin = color:Lerp(DARK, 0.22), color:Lerp(DARK, 0.08)
+	A.up.Color, A.elbow.Color, A.fore.Color, A.hand.Color = sleeve, sleeve, skin, color
+	local tr = visible and 0 or 1
+	A.up.Transparency, A.elbow.Transparency, A.fore.Transparency, A.hand.Transparency = tr, tr, tr, tr
+
+	bone(A.up, shoulder, elbow, 0.40)
+	bone(A.fore, elbow, to, 0.34)
+	A.elbow.Size = Vector3.new(0.42, 0.42, 0.42)
+	A.elbow.CFrame = CFrame.new(elbow)
+	A.hand.Size = HAND_SIZE * handScale
+	A.hand.CFrame = CFrame.lookAt(to, elbow)
+end
+
+local function leftHandPos(rig, gripCF, camCF)
+	local w, P, S = rl.w, rig.pts, rig.S
+	local tot = 0
+	for _, k in ipairs(HAND_KEYS) do tot = tot + w[k] end
+	if tot < 1e-4 then w, tot = {[rig.idleHand] = 1}, 1 end
+	local function g(k) return w[k] or 0 end
+	local p = gripCF:PointToWorldSpace(P.L_HG * S) * g("HG")
+		+ gripCF:PointToWorldSpace(P.L_MW * S) * g("MW")
+		+ camCF:PointToWorldSpace(P.OUT_CAM) * g("OUT")
+		+ camCF:PointToWorldSpace(POUCH) * g("PCH")
+		+ gripCF:PointToWorldSpace(P.L_INS * S) * g("INS")
+		+ gripCF:PointToWorldSpace((P.L_BLT + Vector3.new(0, 0, rl.boltZ)) * S) * g("BLT")
+		+ camCF:PointToWorldSpace(REL_CAM) * g("REL")
+		+ camCF:PointToWorldSpace(SHOW_CAM) * g("SHW")
+		+ camCF:PointToWorldSpace(IDLE_CAM) * g("IDLE")
+	return p / tot
+end
+
+local function update(dt)
+	local ch = LP.Character
+	local hum = ch and ch:FindFirstChildOfClass("Humanoid")
+	if not hum or hum.Health <= 0 then
+		model.Parent = nil
+		swP, swY = 0, 0
+		return
+	end
+	model.Parent = cam
+
+	do
+		local c = cam.CFrame
+		local look = c.LookVector
+		if math.abs(look.Y) < 0.995 then
+			local lvl = CFrame.lookAt(c.Position, c.Position + look)
+			cam.CFrame = CFrame.new(c.Position) * CFrame.Angles(0, -swY, 0) * rotOnly(lvl) * CFrame.Angles(-swP, 0, 0)
+		end
+		swP, swY = 0, 0
+	end
+
+	if crouchHum ~= hum then
+		crouchHum, crouching, crouchA, crouchSpeed0, crouchDirty = hum, false, 0, nil, false
+		btnActive(bCrouch, false)
+		peekA = 0
+		setPeek(0)
+	end
+	crouchA = crouchA + ((crouching and 1 or 0) - crouchA) * math.min(1, dt * 10)
+	peekA = peekA + (peekDir - peekA) * math.min(1, dt * 10)
+	if crouching or crouchA > 0.002 or math.abs(peekA) > 0.002 or BC then
+		hum.CameraOffset = Vector3.new(peekA * PEEK_DIST, -CROUCH_DEPTH * crouchA - (BC and BC_DROP or 0), 0)
+		crouchDirty = true
+	elseif crouchDirty then
+		hum.CameraOffset = Vector3.new(0, 0, 0)
+		crouchDirty = false
+	end
+	if math.abs(peekA) > 0.002 then
+		cam.CFrame = cam.CFrame * CFrame.Angles(0, 0, -peekA * PEEK_ROLL)
+	end
+
+	if tick() - hiddenT > 0.5 then
+		hiddenT = tick()
+		hiddenList = {}
+		for _, d in ipairs(ch:GetDescendants()) do
+			if d:IsA("BasePart") then table.insert(hiddenList, d) end
+		end
+	end
+	for _, p in ipairs(hiddenList) do p.LocalTransparencyModifier = 1 end
+
+	for _, s in pairs(sp) do stepSpring(s, dt) end
+
+	if swPending then
+		swA = math.min(1, swA + dt / 0.16)
+		if swA >= 1 then
+			doSwap(swPending)
+			swPending = nil
+		end
+	elseif swA > 0 then
+		swA = math.max(0, swA - dt / 0.2)
+	end
+
+	local rig = cur
+	local S = rig.S
+	local aimGoal = (aiming and not reloading and not inspecting and not swPending and swA < 0.05) and 1 or 0
+	aimA = aimA + (aimGoal - aimA) * math.min(1, dt * 14)
+
+	if held and rig.modes[rig.mode] == "AUTO" then fire() end
+
+	local speed = hum.MoveDirection.Magnitude > 0 and (hum.RootPart and hum.RootPart.AssemblyLinearVelocity.Magnitude or 0) or 0
+	local kRaw = math.clamp(speed / 16, 0, 1)
+	local k = kRaw * (1 - aimA * 0.8)
+	local t = tick() - t0
+	local bob = rig.sway(t, kRaw, aimA, speed)
+
+	local base = rig.HIP:Lerp(rig.ADS, aimA)
+	local swCF = CFrame.new(0.25 * swA, -1.0 * swA, 0.2 * swA) * CFrame.Angles(-0.8 * swA, 0, 0.25 * swA)
+	local rel = rig.relPose(rl.tilt, rl.rack)
+	local rec = CFrame.new(0, 0, sp.rz[1]) * CFrame.Angles(sp.rp[1], 0, 0)
+	local camCF = cam.CFrame
+	local gl, gy, gr = rl.gunLift, rl.gunYaw, rl.gunRoll
+	local flour = CFrame.new()
+	if rig.flourish then
+		flour = rig.flourish(gl, gy, gr, rl.gunSpin)
+	elseif gl > 0.001 or gr ~= 0 then
+		local mid = Vector3.new(0, 0.25, -1.6) * S
+		flour = CFrame.new(-0.55 * gl, 0.30 * gl, 0.90 * gl) * CFrame.new(mid)
+			* CFrame.Angles(0, gy, 0) * CFrame.Angles(0, 0, gr) * CFrame.new(-mid)
+	end
+	local insp = CFrame.new()
+	if rl.iLift > 0.001 or rl.iPitch ~= 0 or rl.iYaw ~= 0 or rl.iRoll ~= 0 then
+		local pv = rig.iPivot * S
+		insp = CFrame.new(rig.iOff * rl.iLift) * CFrame.new(pv) * CFrame.Angles(rl.iPitch, rl.iYaw, rl.iRoll) * CFrame.new(-pv)
+	end
+	local gripCF = camCF * swCF * base * bob * rec * rel * flour * insp
+
+	for i, p in ipairs(rig.parts) do
+		p.CFrame = gripCF * rig.LOCAL[i]
+	end
+	for _, i in ipairs(rig.slideIdx) do
+		rig.parts[i].CFrame = gripCF * CFrame.new(0, 0, (sp.bolt[1] * rig.slideK + rl.boltZ) * S) * rig.LOCAL[i]
+	end
+
+	local handPos = leftHandPos(rig, gripCF, camCF)
+	local rHandPos = gripCF:PointToWorldSpace((rig.pts.R_HAND + (rig.pts.R_REL or Vector3.new()) * rl.rhi) * S)
+	if rig.twirlPivot and rl.twirl > 0.001 then
+		rHandPos = rHandPos:Lerp(gripCF:PointToWorldSpace(rig.twirlPivot * S), rl.twirl)
+	end
+	if handBlend > 0 then
+		handBlend = math.max(0, handBlend - dt / 0.22)
+		local e = handBlend * handBlend
+		if fromHandCam then handPos = handPos:Lerp(camCF:PointToWorldSpace(fromHandCam), e) end
+		if fromRCam then rHandPos = rHandPos:Lerp(camCF:PointToWorldSpace(fromRCam), e) end
+	end
+	lastHandCam = camCF:PointToObjectSpace(handPos)
+	lastRCam = camCF:PointToObjectSpace(rHandPos)
+
+	local mag = rig.mag
+	if mag then
+		local mc
+		if rl.magState == 0 then
+			mc = gripCF * rig.LOCAL[rig.magI]
+		elseif rl.magState == 1 then
+			local up = camCF:VectorToWorldSpace(Vector3.new(0, rl.toss, 0))
+			local orient = rotOnly(gripCF):Lerp(rotOnly(camCF), rl.free)
+			mc = CFrame.new(handPos + up) * orient * CFrame.Angles(rl.rock, 0, 0) * CFrame.new(0, rig.pts.MAG_HOLD * S, 0)
+				* CFrame.Angles(rl.flip, rl.twist, 0) * rig.MAGROT
+		end
+		if mc then
+			mag.Transparency = 0
+			mag.CFrame = mc
+			lastMagCF = mc
+		else
+			mag.Transparency = 1
+		end
+	end
+
+	local col = armColor()
+	placeArm(ARMS.R, camCF * SHOULDER_R, rHandPos, camCF:VectorToWorldSpace(POLE_R), col, true, 1 - 0.45 * rl.twirl)
+	placeArm(ARMS.L, camCF * SHOULDER_L, handPos, camCF:VectorToWorldSpace(POLE_L), col, rl.w.IDLE < 0.98, 1)
+
+	local fovAim = rig.aimFovMul and (FOV_HIP * rig.aimFovMul) or FOV_AIM
+	cam.FieldOfView = FOV_HIP + (fovAim - FOV_HIP) * aimA
+	if BC then
+		local tt = tick()
+		local calm = 1 - aimA * 0.6
+		local pitch = (math.noise(tt * 1.1, 0.3) * 0.006 + math.sin(tt * 9) * 0.006 * k) * calm
+		local yaw   = (math.noise(tt * 1.4, 5.1) * 0.006 + math.noise(tt * 6, 2.2) * 0.012 * k) * calm
+		local roll  = (math.noise(tt * 0.9, 9.2) * 0.012 + math.sin(tt * 4.5) * 0.014 * k) * calm
+		swP, swY = pitch, yaw
+		local c = cam.CFrame
+		cam.CFrame = CFrame.new(c.Position) * CFrame.Angles(0, yaw, 0) * rotOnly(c) * CFrame.Angles(pitch, 0, 0) * CFrame.Angles(0, 0, roll)
+	end
+	cam.CFrame = cam.CFrame * CFrame.Angles(sp.cam[1] * 0.12, 0, 0)
+	dot.Visible = aimA < 0.5
+end
+
+local STEP = "AK47_Viewmodel"
+RunService:BindToRenderStep(STEP, Enum.RenderPriority.Camera.Value + 1, update)
+
+pcall(function() LP.CameraMode = Enum.CameraMode.LockFirstPerson end)
+
+genv.AK47_Cleanup = function()
+	pcall(function() if notifyConn then notifyConn:Disconnect() end end)
+	pcall(function() if notifyGui then notifyGui:Destroy() end end)
+	pcall(function() if bodycamFX then bodycamFX:Destroy() end end)
+	token = token + 1
+	pcall(function()
+		if crouchHum then
+			crouchHum.CameraOffset = Vector3.new(0, 0, 0)
+			if crouchSpeed0 then crouchHum.WalkSpeed = crouchSpeed0 end
+		end
+	end)
+	pcall(function() RunService:UnbindFromRenderStep(STEP) end)
+	for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
+	pcall(function() model:Destroy() end)
+	for _, r in pairs(RIGS) do pcall(function() r.model:Destroy() end) end
+	pcall(function() gui:Destroy() end)
+	pcall(function() fxFolder:Destroy() end)
+	pcall(function() LP.CameraMode = Enum.CameraMode.Classic end)
+	pcall(function() cam.FieldOfView = 70 end)
+	for _, p in ipairs(hiddenList) do pcall(function() p.LocalTransparencyModifier = 0 end) end
+	for _, h in ipairs(goreHidden) do pcall(function() h[1][h[2]] = h[3] end) end
+end
+
+showNotice("Made By Scripterblabla", "[AK47 Script]", 10)
+
