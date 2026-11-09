@@ -59,6 +59,20 @@ local LP = Players.LocalPlayer
 local cam = workspace.CurrentCamera
 local genv = (getgenv and getgenv()) or _G
 
+local UI_SCALE, DEVICE = 1, "PC"
+do
+	local vp = cam.ViewportSize
+	local minSide = math.min(vp.X, vp.Y)
+	if UIS.TouchEnabled and not UIS.KeyboardEnabled then
+		if minSide >= 600 then
+			DEVICE, UI_SCALE = "Tablet", 0.85
+		else
+			DEVICE, UI_SCALE = "Mobile", 0.65
+		end
+	end
+end
+local NOTICE_SCALE = math.min(1, UI_SCALE + 0.1)
+
 if genv.AK47_Cleanup then pcall(genv.AK47_Cleanup) end
 
 local notifyGui, notifyConn
@@ -101,6 +115,10 @@ local function showNotice(line1, line2, duration)
 	card.GroupTransparency = 1
 	card.Parent = ng
 	round(card, UDim.new(0, 18))
+
+	local cardScale = Instance.new("UIScale")
+	cardScale.Scale = NOTICE_SCALE
+	cardScale.Parent = card
 
 	local bg = Instance.new("UIGradient")
 	bg.Color = ColorSequence.new({
@@ -718,13 +736,19 @@ local function stepSpring(s, dt)
 	s[1] = s[1] + s[2] * dt
 end
 
-local function label(props)
+local function label(props, keepX)
 	local l = Instance.new("TextLabel")
 	l.BackgroundTransparency = 1
 	l.Font = Enum.Font.GothamBold
 	l.TextColor3 = Color3.new(1, 1, 1)
 	l.TextStrokeTransparency = 0.5
 	for k, v in pairs(props) do l[k] = v end
+	if UI_SCALE ~= 1 then
+		local s, p = l.Size, l.Position
+		l.Size = UDim2.new(s.X.Scale, s.X.Offset * UI_SCALE, s.Y.Scale, s.Y.Offset * UI_SCALE)
+		l.Position = UDim2.new(p.X.Scale, keepX and p.X.Offset or p.X.Offset * UI_SCALE, p.Y.Scale, p.Y.Offset * UI_SCALE)
+		l.TextSize = math.max(math.floor(l.TextSize * UI_SCALE + 0.5), 11)
+	end
 	l.Parent = gui
 	return l
 end
@@ -850,6 +874,8 @@ function ICONS.peekL(c) peekIcon(c, -1) end
 function ICONS.peekR(c) peekIcon(c, 1) end
 
 local function mkButton(kind, pos, size)
+	size = size * UI_SCALE
+	pos = UDim2.new(pos.X.Scale, pos.X.Offset * UI_SCALE, pos.Y.Scale, pos.Y.Offset * UI_SCALE)
 	local b = Instance.new("TextButton")
 	b.Text, b.Size, b.Position = "", UDim2.new(0, size, 0, size), pos
 	b.BackgroundColor3, b.BackgroundTransparency = Color3.new(0, 0, 0), 0.45
@@ -939,14 +965,14 @@ if BC then
 	flicker.Parent = gui
 
 	local recDot = Instance.new("Frame")
-	recDot.Size, recDot.Position = UDim2.new(0, 12, 0, 12), UDim2.new(0, 100, 0, 18)
+	recDot.Size, recDot.Position = UDim2.new(0, 12 * UI_SCALE, 0, 12 * UI_SCALE), UDim2.new(0, 100, 0, 18 * UI_SCALE)
 	recDot.BackgroundColor3, recDot.BorderSizePixel = Color3.fromRGB(255, 30, 30), 0
 	local rc = Instance.new("UICorner")
 	rc.CornerRadius = UDim.new(1, 0)
 	rc.Parent = recDot
 	recDot.Parent = gui
-	local recLbl = label{Size = UDim2.new(0, 220, 0, 24), Position = UDim2.new(0, 118, 0, 12), TextSize = 18, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Left, Text = "REC 00:00:00"}
-	local unitLbl = label{Size = UDim2.new(0, 260, 0, 16), Position = UDim2.new(0, 100, 0, 36), TextSize = 13, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 0.2, Text = "BODYCAM  |  UNIT 047"}
+	local recLbl = label({Size = UDim2.new(0, 220, 0, 24), Position = UDim2.new(0, 118, 0, 12), TextSize = 18, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Left, Text = "REC 00:00:00"}, true)
+	local unitLbl = label({Size = UDim2.new(0, 260, 0, 16), Position = UDim2.new(0, 100, 0, 36), TextSize = 13, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Left, TextTransparency = 0.2, Text = "BODYCAM  |  UNIT 047"}, true)
 	local stampLbl = label{Size = UDim2.new(0, 300, 0, 22), Position = UDim2.new(1, -310, 0, 12), TextSize = 16, Font = Enum.Font.Code, TextXAlignment = Enum.TextXAlignment.Right, Text = ""}
 
 	pcall(function()
@@ -2103,4 +2129,3 @@ genv.AK47_Cleanup = function()
 end
 
 showNotice("Made By Scripterblabla", "[AK47 Script]", 10)
-
