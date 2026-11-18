@@ -1,0 +1,2309 @@
+local CONFIG = {
+    FileDir      = "RevolverFPS",
+    FileName     = "Revolver.rbxm",
+    ExtraPaths   = { "Revolver.Rbxmx", "Revolver.rbxmx", "Revolver.rbxm" },
+    UIFileName   = "OB_UI.rbxm",
+    AnimFileName = "Revolver_Animation.rbxm",
+
+    UseOBUI       = true,
+    ShowVersion   = false,
+    UseAnimations = true,
+    AnimLoadTime  = 4,
+    PreFireTime   = 0.1,
+    CameraAnimation = true,
+    CameraAnimWeight = 0.25,
+    CameraAnimMaxDeg = 4,
+    MagCheckTime  = 2.4,
+    ReloadAnimFile  = "Brocklin_Reload.rbxm",
+    InspectAnimFile = "Brocklin_Inspect.rbxm",
+    ReloadMarks  = { Move1 = 0, BoltOpen = 0.27, Hand = 0.43, Casing = 0.73, MagOut = 0.77,
+                     MagPouch = 1.2, MagIn = 2.23, Move2 = 2.43, BoltClose = 2.8 },
+    InspectMarks = { {0, "Raise"}, {0.3, "LongInspect"}, {1.43, "Inspect2"}, {2.07, "Move1"},
+                     {2.33, "Inspect3"}, {3.07, "Move2"}, {3.27, "Inspect4"}, {3.57, "I4End"},
+                     {3.83, "Inspect5"}, {4.63, "Move1"}, {5.03, "BoltOpen1"}, {5.7, "BoltClose1"} },
+
+    Device = "Auto",
+
+    Reserve         = 15,
+    InfiniteReserve = false,
+    FireInterval    = 0.42,
+    Automatic       = false,
+    Range           = 1500,
+    HipSpread       = 0.012,
+    AimSpread       = 0.0015,
+
+    AimFOV       = 55,
+    AimTime      = 0.17,
+    LeanDistance = 0.9,
+    LeanAngle    = 14,
+    CrouchDrop   = 1.5,
+    WallPush     = true,
+    ArmWidth     = 0.6,
+    HideCharacter = true,
+    LockFirstPerson = true,
+
+    ControlWalkSpeed = true,
+    SprintMult = 1.5,
+    CrouchMult = 0.5,
+    AimMult    = 0.7,
+
+    Volume   = 1,
+    ShowUI   = true,
+    UIOffsetY = 0,
+    Debug    = false,
+}
+
+local Players          = game:GetService("Players")
+local RunService       = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService     = game:GetService("TweenService")
+local Debris           = game:GetService("Debris")
+local Workspace        = game:GetService("Workspace")
+local InsertService    = game:GetService("InsertService")
+
+local genv = (getgenv and getgenv()) or _G
+if genv.RevolverFPS and type(genv.RevolverFPS.Destroy) == "function" then
+    pcall(genv.RevolverFPS.Destroy)
+end
+
+local LocalPlayer = Players.LocalPlayer
+while not LocalPlayer do
+    task.wait()
+    LocalPlayer = Players.LocalPlayer
+end
+
+local function dbg(...)
+    if CONFIG.Debug then warn("[RevolverFPS]", ...) end
+end
+
+local KSP = game:GetService("KeyframeSequenceProvider")
+
+local ANIM_IDS = {
+    Equip      = "rbxassetid://76628970836356",
+    EquipFirst = "rbxassetid://109549652255983",
+    Fire       = "rbxassetid://126680720473898",
+    HoldUp     = "rbxassetid://121719002517067",
+    Idle       = "rbxassetid://133793886986426",
+    Inspect    = "rbxassetid://90295723602700",
+    MagCheck   = "rbxassetid://100407416100868",
+    PreFire    = "rbxassetid://85498128266191",
+    Reload     = "rbxassetid://126336504046818",
+    Sprint     = "rbxassetid://121719002517067",
+    Unequip    = "rbxassetid://103451020233824",
+}
+
+local FB = {
+  parts = {
+    {"Grip","P",{0.2,0.2,0.2},{0,0,0,1,0,0,0,1,0,0,0,1},1,{0.63922,0.63529,0.64706}},
+    {"AimPart","P",{0.05,0.05,0.05},{0.00161,0.53225,0.94968,1,0,0,0,1,0,0,0,1},1,{1,0,0}},
+    {"AnimBase","P",{0.2,0.2,0.2},{-0.33118,0.83815,2.27311,1,0,0,0,1,0,0,0,1},1,{0.63922,0.63529,0.64706}},
+    {"FakeCamera","P",{0.2,0.2,0.2},{-0.33117,0.83822,2.27328,1,0,0,0,1,0,0,0,1},1,{0.63922,0.63529,0.64706}},
+    {"Left Arm","P",{1,2,1},{-0.3727,-0.63453,0.5722,0.81965,-0.44305,0.36294,0.29793,-0.21154,-0.93089,0.48924,0.87121,-0.04127},1,{0.63922,0.63529,0.64706}},
+    {"Right Arm","P",{1,2,1},{0.47957,-0.45192,0.71976,0.98962,0.13075,0.05981,0.07035,-0.07718,-0.99447,-0.1254,0.98845,-0.08551},1,{0.63922,0.63529,0.64706}},
+    {"Trigger","M",{0.0571,0.2473,0.189},{0.00191,0.00554,-0.08506,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626541302","rbxassetid://11626497519",{0.342,1.481,1.132}},
+    {"Barrel","M",{0.1546,0.3156,1.1443},{0.00198,0.38419,-1.00564,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626531241","rbxassetid://12104782790",{0.926,1.89,6.853}},
+    {"Loader","M",{0.3421,0.3396,0.329},{0.54437,-0.37609,1.55673,-0.81255,-0.58279,0.00727,0.58272,-0.81267,-0.00185,0.00685,0.00276,0.99999},0,{0.63922,0.63529,0.64706},"rbxassetid://11626517735","rbxassetid://11626508659",{2.049,2.034,1.97}},
+    {"Casing4","M",{0.2695,0.0932,0.0945},{0.09914,0.33969,-0.16918,0,0,-1,0,1,0,1,0,0},0,{0.63922,0.63529,0.64706},"rbxassetid://16229246033","rbxassetid://11626583213",{1.614,0.558,0.566}},
+    {"PistolGrip","M",{0.2308,0.7511,0.5883},{0.00188,-0.14905,0.34266,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626537239","rbxassetid://11626536013",{1.382,4.498,3.523}},
+    {"Frame","M",{0.2805,0.7245,1.1223},{0.0021,0.15743,-0.02656,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626489040","rbxassetid://11626497519",{1.68,4.339,6.721}},
+    {"Extractor","M",{0.1817,0.1728,0.8939},{0.00177,0.30425,-0.46139,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626511598","rbxassetid://11626497519",{1.088,1.035,5.353}},
+    {"Cylinder","M",{0.326,0.3258,0.3867},{0.00186,0.30811,-0.23785,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626496367","rbxassetid://11626497519",{1.952,1.951,2.316}},
+    {"Casing1","M",{0.2695,0.0932,0.0945},{-0.09628,0.33971,-0.16917,0,0,-1,0,1,0,1,0,0},0,{0.63922,0.63529,0.64706},"rbxassetid://16229246033","rbxassetid://11626583213",{1.614,0.558,0.566}},
+    {"Bullet1","M",{0.0945,0.0932,0.3764},{0.44373,-0.34486,1.39394,-0.81255,-0.58279,0.00727,0.58272,-0.81267,-0.00185,0.00685,0.00276,0.99999},0,{0.63922,0.63529,0.64706},"rbxassetid://11626515111","rbxassetid://11626583213",{0.566,0.558,2.254}},
+    {"Casing3","M",{0.2695,0.0932,0.0945},{0.06122,0.22521,-0.1692,0,0,-1,0,1,0,1,0,0},0,{0.63922,0.63529,0.64706},"rbxassetid://16229246033","rbxassetid://11626583213",{1.614,0.558,0.566}},
+    {"Hammer","M",{0.0755,0.2157,0.2266},{0.00196,0.31833,0.17152,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626540310","rbxassetid://11626497519",{0.452,1.292,1.357}},
+    {"Bullet2","M",{0.0945,0.0932,0.3764},{0.48343,-0.45943,1.39354,-0.81255,-0.58279,0.00727,0.58272,-0.81267,-0.00185,0.00685,0.00276,0.99999},0,{0.63922,0.63529,0.64706},"rbxassetid://11626515111","rbxassetid://11626583213",{0.566,0.558,2.254}},
+    {"Bullet3","M",{0.0945,0.0932,0.3764},{0.60474,-0.46016,1.39424,-0.81255,-0.58279,0.00727,0.58272,-0.81267,-0.00185,0.00685,0.00276,0.99999},0,{0.63922,0.63529,0.64706},"rbxassetid://11626515111","rbxassetid://11626583213",{0.566,0.558,2.254}},
+    {"Casing2","M",{0.2695,0.0932,0.0945},{-0.05784,0.22565,-0.16919,0,0,-1,0,1,0,1,0,0},0,{0.63922,0.63529,0.64706},"rbxassetid://16229246033","rbxassetid://11626583213",{1.614,0.558,0.566}},
+    {"Bullet5","M",{0.0945,0.0932,0.3764},{0.54017,-0.27397,1.39313,-0.81255,-0.58279,0.00727,0.58272,-0.81267,-0.00185,0.00685,0.00276,0.99999},0,{0.63922,0.63529,0.64706},"rbxassetid://11626515111","rbxassetid://11626583213",{0.566,0.558,2.254}},
+    {"Bullet4","M",{0.0945,0.0932,0.3764},{0.63788,-0.34396,1.39236,-0.81255,-0.58279,0.00727,0.58272,-0.81267,-0.00185,0.00685,0.00276,0.99999},0,{0.63922,0.63529,0.64706},"rbxassetid://11626515111","rbxassetid://11626583213",{0.566,0.558,2.254}},
+    {"Crane","M",{0.108,0.2795,0.1551},{-0.01592,0.20485,-0.51012,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626510693","rbxassetid://11626497519",{0.647,1.674,0.929}},
+    {"Rear Sight","M",{0.1222,0.1448,0.1636},{0.00192,0.46617,-0.01715,1,0,0,0,1,0,0,0,1},0,{0.63922,0.63529,0.64706},"rbxassetid://11626538499","rbxassetid://11626497519",{0.732,0.867,0.98}},
+    {"Casing5","M",{0.2695,0.0932,0.0945},{0.00193,0.41019,-0.1692,0,0,-1,0,1,0,1,0,0},0,{0.63922,0.63529,0.64706},"rbxassetid://16229246033","rbxassetid://11626583213",{1.614,0.558,0.566}}
+  },
+  joints = {
+    {"Motor6D","Bullet1","Bullet1",{0.1027,0.3396,-0.2228,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Casing1","Casing1",{-0.0955,0.3396,-0.1692,0,0,-1,0,1,0,1,0,0},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Casing4","Casing4",{0.0991,0.3397,-0.1692,0,0,-1,0,1,0,1,0,0},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Bullet3","Bullet3",{-0.095,0.3396,-0.2228,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Extractor","Extractor",{0.0017,0.3042,-0.4613,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Bullet5","Bullet5",{0.0659,0.226,-0.2228,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Casing3","Casing3",{0.0621,0.2252,-0.1692,0,0,-1,0,1,0,1,0,0},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Hammer","Hammer",{0.0019,0.3183,0.1715,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Loader","Loader",{0.0037,0.308,-0.0592,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Bullet4","Bullet4",{-0.0543,0.226,-0.2228,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Cylinder","Cylinder",{0.0019,0.308,-0.2378,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Casing2","Casing2",{-0.0579,0.2256,-0.1692,0,0,-1,0,1,0,1,0,0},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Casing5","Casing5",{0.002,0.4101,-0.1692,0,0,-1,0,1,0,1,0,0},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Motor6D","Bullet2","Bullet2",{0.0038,0.4097,-0.2228,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Weld","Grip_AimPart","AimPart",{0.0016,0.5322,0.9497,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Weld","Grip_PistolGrip","PistolGrip",{0.0019,-0.1491,0.3427,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Weld","Grip_Frame","Frame",{0.0021,0.1574,-0.0265,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Weld","Grip_Trigger","Trigger",{0.0019,0.0055,-0.0851,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Weld","Grip_Barrel","Barrel",{0.0019,0.3841,-1.0056,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Weld","Grip_Crane","Crane",{-0.0159,0.2048,-0.5101,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}},
+    {"Weld","Grip_Rear Sight","Rear Sight",{0.0019,0.4662,-0.0171,1,0,0,0,1,0,0,0,1},{0,0,0,1,0,0,0,1,0,0,0,1}}
+  },
+  sounds = {
+    {"AimDown","rbxassetid://7176527906",1},
+    {"Fire","rbxassetid://90380828718743",1},
+    {"MagOut","rbxassetid://92570087994343",2},
+    {"I4End","rbxassetid://102412940887595",1.5},
+    {"BoltClose1","rbxassetid://71777484748347",1.5},
+    {"Inspect4","rbxassetid://73461944467330",1.5},
+    {"Inspect5","rbxassetid://140586422768385",1.5},
+    {"MagPouch","rbxassetid://86991363905764",0.8},
+    {"Echo","rbxassetid://133484254778676",2},
+    {"Equip","rbxassetid://87427631697895",3},
+    {"BoltClose","rbxassetid://71777484748347",1.5},
+    {"Inspect2","rbxassetid://109089684382413",1.5},
+    {"Empty","rbxassetid://72425104284712",0.5},
+    {"Move1","rbxassetid://104409394435660",3},
+    {"Inspect3","rbxassetid://109089684382413",1.5},
+    {"LongInspect","rbxassetid://73461944467330",1.5},
+    {"Click","rbxassetid://135850245399761",0.5},
+    {"Move2","rbxassetid://86991363905764",1},
+    {"Hand","rbxassetid://86991363905764",0.5},
+    {"PreFire","rbxassetid://71403239537586",0.5},
+    {"Raise","rbxassetid://86991363905764",1},
+    {"BoltOpen1","rbxassetid://110368607799590",1.5},
+    {"Unequip","rbxassetid://78252817213118",2},
+    {"MagIn","rbxassetid://88705165151400",2},
+    {"AimUp","rbxassetid://7176527316",1},
+    {"Button","rbxassetid://6214955871",0.5},
+    {"BoltOpen","rbxassetid://110368607799590",1.5}
+  },
+  attach = {
+    {"Muzzle",{0.0042,0.4111,-1.6161,1,0,0,0,1,0,0,0,1}},
+    {"Mag",{-0.2924,0.3236,-0.169,1,0,0,0,1,0,0,0,1}}
+  },
+  light = { 5, 30, {1,0.698,0.271} },
+}
+
+local ID = CFrame.new()
+
+local function smooth(a)
+    if a < 0 then a = 0 elseif a > 1 then a = 1 end
+    return a * a * (3 - 2 * a)
+end
+local function approach(v, target, step)
+    if v < target then return math.min(v + step, target) end
+    return math.max(v - step, target)
+end
+local function newSpring(k, d)
+    return { p = Vector3.new(0, 0, 0), v = Vector3.new(0, 0, 0), k = k, d = d }
+end
+local function stepSpring(s, dt)
+    local n = 3
+    local h = math.min(dt, 0.05) / n
+    for _ = 1, n do
+        local a = s.p * (-s.k) - s.v * s.d
+        s.v = s.v + a * h
+        s.p = s.p + s.v * h
+    end
+end
+local function cf12(t)
+    return CFrame.new(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11], t[12])
+end
+local function rnd(a, b) return a + (b - a) * math.random() end
+
+local function findPart(root, name)
+    for _, d in ipairs(root:GetDescendants()) do
+        if d.Name == name and d:IsA("BasePart") then return d end
+    end
+    return nil
+end
+
+local function validModel(m)
+    if not (m and m:IsA("Model")) then return false end
+    for _, n in ipairs({ "Grip", "AimPart", "AnimBase", "Left Arm", "Right Arm", "Loader", "Cylinder", "Hammer" }) do
+        if not findPart(m, n) then return false end
+    end
+    return true
+end
+
+local function ensureFile(fileName)
+    if not isfile then return nil, "isfile not supported" end
+    local candidates = {}
+    if CONFIG.FileDir and CONFIG.FileDir ~= "" then
+        candidates[#candidates + 1] = CONFIG.FileDir .. "/" .. fileName
+    end
+    candidates[#candidates + 1] = fileName
+    for _, p in ipairs(candidates) do
+        local ok, ex = pcall(isfile, p)
+        if ok and ex then return p end
+    end
+    return nil, "file not found: " .. fileName
+end
+
+local function loadObjects(path)
+    local getasset = getcustomasset or getsynasset or get_custom_asset
+    if not getasset then return nil, "no getcustomasset" end
+    local ok, asset = pcall(getasset, path)
+    if not ok or not asset then return nil, tostring(asset) end
+    local objs
+    local ok2, res = pcall(function() return game:GetObjects(asset) end)
+    if ok2 and type(res) == "table" then objs = res end
+    if not objs then
+        local ok3, obj = pcall(function() return InsertService:LoadLocalAsset(asset) end)
+        if ok3 and obj then objs = { obj } end
+    end
+    if not objs then return nil, "GetObjects failed" end
+    return objs
+end
+
+local function tryLoadFile(path)
+    local objs, why = loadObjects(path)
+    if not objs then return nil, why end
+    local found
+    for _, o in ipairs(objs) do
+        if not found and validModel(o) then found = o else pcall(function() o:Destroy() end) end
+    end
+    if not found then return nil, "model missing required parts" end
+    return found
+end
+
+local function buildFallback()
+    local model = Instance.new("Model")
+    model.Name = "Revolver"
+    local by = {}
+    for _, p in ipairs(FB.parts) do
+        local name, kind, size, cf, tr, col, mesh, tex, init = p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]
+        local part
+        if kind == "M" then
+            local ok, mp = pcall(function()
+                return InsertService:CreateMeshPartAsync(mesh, Enum.CollisionFidelity.Box, Enum.RenderFidelity.Automatic)
+            end)
+            if ok and mp then
+                part = mp
+                if tex ~= "" then
+                    local sa = Instance.new("SurfaceAppearance")
+                    sa.ColorMap = tex
+                    sa.Parent = part
+                end
+            else
+                part = Instance.new("Part")
+                local sm = Instance.new("SpecialMesh")
+                sm.MeshType = Enum.MeshType.FileMesh
+                sm.MeshId = mesh
+                sm.TextureId = tex
+                sm.Scale = Vector3.new(size[1] / init[1], size[2] / init[2], size[3] / init[3])
+                sm.Parent = part
+            end
+        else
+            part = Instance.new("Part")
+        end
+        part.Name = name
+        part.Size = Vector3.new(size[1], size[2], size[3])
+        part.Color = Color3.new(col[1], col[2], col[3])
+        part.Transparency = tr
+        part.CFrame = cf12(cf)
+        part.Anchored = true
+        part.Parent = model
+        by[name] = part
+    end
+    for _, j in ipairs(FB.joints) do
+        local p0, p1 = by.Grip, by[j[3]]
+        if p0 and p1 then
+            local w = Instance.new(j[1])
+            w.Name = j[2]
+            w.Part0 = p0
+            w.Part1 = p1
+            w.C0 = cf12(j[4])
+            w.C1 = cf12(j[5])
+            w.Parent = p0
+        end
+    end
+    for _, s in ipairs(FB.sounds) do
+        local snd = Instance.new("Sound")
+        snd.Name = s[1]
+        snd.SoundId = s[2]
+        snd.Volume = s[3]
+        snd.Parent = by.Grip
+    end
+    for _, a in ipairs(FB.attach) do
+        local att = Instance.new("Attachment")
+        att.Name = a[1]
+        att.CFrame = cf12(a[2])
+        att.Parent = by.Grip
+        if a[1] == "Muzzle" then
+            local pe = Instance.new("ParticleEmitter")
+            pe.Name = "Flash"
+            pe.Enabled = false
+            pe.Rate = 0
+            pe.Lifetime = NumberRange.new(0.06, 0.1)
+            pe.Speed = NumberRange.new(0, 0)
+            pe.LightEmission = 1
+            pe.Size = NumberSequence.new(1.2, 0.2)
+            pe.Transparency = NumberSequence.new(0, 1)
+            pe.Color = ColorSequence.new(Color3.fromRGB(255, 190, 90))
+            pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+            pe.Parent = att
+            local pl = Instance.new("PointLight")
+            pl.Name = "LightFlash"
+            pl.Brightness = FB.light[1]
+            pl.Range = FB.light[2]
+            pl.Color = Color3.new(FB.light[3][1], FB.light[3][2], FB.light[3][3])
+            pl.Enabled = false
+            pl.Parent = att
+        end
+    end
+    return model
+end
+
+local function loadModel()
+    local candidates = {}
+    local path, err = ensureFile(CONFIG.FileName)
+    if path then candidates[#candidates + 1] = path else dbg("ensureFile:", err) end
+    if isfile then
+        for _, extra in ipairs(CONFIG.ExtraPaths) do
+            local ok, ex = pcall(isfile, extra)
+            if ok and ex then candidates[#candidates + 1] = extra end
+        end
+    end
+    for _, p in ipairs(candidates) do
+        local m, why = tryLoadFile(p)
+        if m then return m, "file " .. p end
+        dbg("load failed", p, why)
+    end
+    return buildFallback(), "fallback (mesh IDs)"
+end
+
+local R
+local ORDER = {}
+local N = 5
+
+local HINGE
+local SWING_ANGLE = math.rad(85)
+local SLOT_ANGLE  = math.rad(72)
+
+local function buildRig(model)
+    local r = { model = model, parts = {}, J = {}, joints = {}, sounds = {} }
+    for _, d in ipairs(model:GetDescendants()) do
+        if d:IsA("BasePart") then
+            r.parts[d.Name] = d
+        elseif d:IsA("Sound") then
+            r.sounds[d.Name] = d
+        end
+    end
+    local grip = r.parts.Grip
+    local gcf = grip.CFrame
+
+    r.HIP   = r.parts.AnimBase.CFrame:ToObjectSpace(gcf)
+    r.AIM   = r.parts.AimPart.CFrame:ToObjectSpace(gcf)
+    r.LEFT  = gcf:ToObjectSpace(r.parts["Left Arm"].CFrame)
+    r.RIGHT = gcf:ToObjectSpace(r.parts["Right Arm"].CFrame)
+    r.PARK  = gcf:ToObjectSpace(r.parts.Loader.CFrame)
+
+    local animBase = r.parts.AnimBase
+    r.body = {}
+    local weldObjs = {}
+    for _, d in ipairs(model:GetDescendants()) do
+        if d:IsA("JointInstance") then
+            local p0, p1 = d.Part0, d.Part1
+            local isM6 = d:IsA("Motor6D")
+            if p0 == grip and p1 then
+                local rec = { name = d.Name, p1 = p1, c0 = d.C0, c1i = d.C1:Inverse(), tr = ID, pre = nil, m6 = isM6 and d or nil }
+                r.joints[#r.joints + 1] = rec
+                r.J[p1.Name] = rec
+            elseif p0 == animBase and p1 and isM6 then
+                r.body[p1.Name] = { name = d.Name, p1 = p1, c0 = d.C0, c1i = d.C1:Inverse(), m6 = d,
+                    hipT = d.C0:Inverse() * animBase.CFrame:ToObjectSpace(p1.CFrame) * d.C1 }
+            end
+            if not isM6 then weldObjs[#weldObjs + 1] = d end
+        end
+    end
+    for _, d in ipairs(weldObjs) do d:Destroy() end
+    for _, d in ipairs(model:GetDescendants()) do
+        if d:IsA("LuaSourceContainer") then d:Destroy() end
+    end
+    r.animator = model:FindFirstChildWhichIsA("Animator", true)
+    r.canAnimate = (r.body.Grip ~= nil and r.body["Left Arm"] ~= nil and r.body["Right Arm"] ~= nil) and next(r.body) ~= nil
+    if r.canAnimate and not r.animator then
+        local ac = Instance.new("AnimationController")
+        ac.Parent = model
+        r.animator = Instance.new("Animator")
+        r.animator.Parent = ac
+    end
+    if r.canAnimate then
+        local g = r.body.Grip
+        r.restGun = g.c0 * g.c1i
+        r.cylAxis = (r.J.Cylinder and r.J.Cylinder.c0 or ID):VectorToObjectSpace(Vector3.new(0, 0, 1))
+    end
+
+    for _, p in pairs(r.parts) do
+        p.Anchored = true
+        p.CanCollide = false
+        p.CanTouch = false
+        p.CanQuery = false
+        p.CastShadow = false
+    end
+
+    r.muzzle = nil
+    for _, d in ipairs(grip:GetChildren()) do
+        if d:IsA("Attachment") and d.Name == "Muzzle" then r.muzzle = d end
+    end
+    for _, j in ipairs(r.joints) do
+        local n = j.p1.Name
+        j.ring = (n == "Cylinder" or n == "Extractor" or n:find("^Bullet") ~= nil or n:find("^Casing") ~= nil)
+    end
+    r.cyl = r.J.Cylinder.c0.Position
+    r.loaderC0 = r.J.Loader.c0
+    HINGE = Vector3.new(-0.15, 0.08, 0)
+
+    local slots = {}
+    for i = 1, 5 do
+        local bj = r.J["Bullet" .. i]
+        local c0p = bj.c0.Position
+        local best, bestD
+        for k = 1, 5 do
+            local cj = r.J["Casing" .. k]
+            local dx, dy = cj.c0.Position.X - c0p.X, cj.c0.Position.Y - c0p.Y
+            local d = math.sqrt(dx * dx + dy * dy)
+            if not bestD or d < bestD then best, bestD = k, d end
+        end
+        slots[i] = {
+            bullet = r.parts["Bullet" .. i], bj = bj,
+            casing = r.parts["Casing" .. best], cj = r.J["Casing" .. best],
+            ang = math.deg(math.atan2(c0p.Y - r.cyl.Y, c0p.X - r.cyl.X)),
+            relB = r.loaderC0:Inverse() * bj.c0,
+            state = "live",
+        }
+    end
+    local topAng, topD = 90, nil
+    for _, s in ipairs(slots) do
+        local d = math.abs((s.ang - 90 + 180) % 360 - 180)
+        if not topD or d < topD then topD, topAng = d, s.ang end
+    end
+    for _, s in ipairs(slots) do s.rel = (s.ang - topAng) % 360 end
+    table.sort(slots, function(a, b) return a.rel < b.rel end)
+    ORDER = slots
+    N = #slots
+    return r
+end
+
+local S = {
+    alive = true,
+    aimOn = false, running = false, crouch = false, leanDir = 0,
+    trigger = false, reloading = false, inspecting = false,
+    cursor = 0, reserve = CONFIG.Reserve, nextShot = 0,
+    bobPhase = 0, lastScan = 0, charParts = {},
+}
+local P = {
+    equip = 0, aim = 0, sprint = 0, crouch = 0, wall = 0, lean = 0,
+    tilt = 0, swing = 0, extractor = 0, hammer = 0, trigger = 0, spin = 0,
+    L = 0, Lin = 0, hand = 0, ins = 0, ins2 = 0,
+}
+local TW = {}
+local conns = {}
+local UI = { btn = {} }
+local fxFolder
+
+local sway    = newSpring(70, 11)
+local kickRot = newSpring(110, 13)
+local kickPos = newSpring(130, 15)
+local camKick = newSpring(90, 12)
+
+local function track(c) conns[#conns + 1] = c; return c end
+
+local function tween(key, to, dur)
+    TW[key] = { from = P[key], to = to, t0 = os.clock(), dur = math.max(dur, 0.001) }
+end
+local function snap(key, v) TW[key] = nil; P[key] = v end
+
+local function alive(token) return S.alive and S.token == token end
+local function sleep(sec, check)
+    local t0 = os.clock()
+    while os.clock() - t0 < sec do
+        task.wait()
+        if check and not check() then return false end
+        if not S.alive then return false end
+    end
+    return true
+end
+
+local function getHum()
+    local c = LocalPlayer.Character
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+
+local function sfx(name, speed)
+    local s = R.sounds[name]
+    if not s then return end
+    local c = s:Clone()
+    c.Volume = s.Volume * CONFIG.Volume
+    if speed then c.PlaybackSpeed = speed end
+    c.Parent = R.parts.Grip
+    c:Play()
+    Debris:AddItem(c, 8)
+end
+
+local A = { on = false, tracks = {}, ok = {}, loops = {}, full = false, custom = {}, kf = {} }
+local FULL = { Equip = true, EquipFirst = true, Unequip = true, Reload = true, Inspect = true, MagCheck = true }
+
+local function animPriority(name)
+    local function get(n)
+        local ok, v = pcall(function() return Enum.AnimationPriority[n] end)
+        return (ok and v) or Enum.AnimationPriority.Action
+    end
+    if name == "Idle" then return get("Idle") end
+    if name == "Sprint" or name == "HoldUp" then return get("Movement") end
+    if name == "Fire" or name == "PreFire" then return get("Action") end
+    return get("Action2")
+end
+
+local function sampleJoint(arr, t)
+    local n = #arr
+    if t <= arr[1].t then return arr[1].cf end
+    if t >= arr[n].t then return arr[n].cf end
+    local lo, hi = 1, n
+    while hi - lo > 1 do
+        local mid = math.floor((lo + hi) / 2)
+        if arr[mid].t <= t then lo = mid else hi = mid end
+    end
+    local a, b = arr[lo], arr[hi]
+    if a.const then return a.cf end
+    return a.cf:Lerp(b.cf, (t - a.t) / (b.t - a.t))
+end
+
+local function isID(T)
+    return T.Position.Magnitude < 1e-3
+        and (T.RightVector - Vector3.xAxis).Magnitude < 1e-3
+        and (T.UpVector - Vector3.yAxis).Magnitude < 1e-3
+end
+
+local function newKFTrack(ks, motors, rest)
+    local joints, length = {}, 0
+    for _, kf in ipairs(ks:GetChildren()) do
+        if kf:IsA("Keyframe") then
+            local kt = kf.Time
+            if kt > length then length = kt end
+            for _, d in ipairs(kf:GetDescendants()) do
+                if d:IsA("Pose") and motors[d.Name] then
+                    local arr = joints[d.Name]
+                    if not arr then arr = {}; joints[d.Name] = arr end
+                    arr[#arr + 1] = { t = kt, cf = d.CFrame, const = (d.EasingStyle == Enum.PoseEasingStyle.Constant) }
+                end
+            end
+        end
+    end
+    if length <= 0 or next(joints) == nil then return nil end
+    for _, arr in pairs(joints) do
+        table.sort(arr, function(x, y) return x.t < y.t end)
+    end
+    local last = {}
+    local tr = { Length = length, IsPlaying = false, Looped = false }
+    local function release()
+        for name, lt in pairs(last) do
+            local m = motors[name]
+            if m and m.Transform == lt then m.Transform = ID end
+        end
+        table.clear(last)
+    end
+    function tr:Play(fade, _, speed)
+        self.t0 = os.clock()
+        self.speed = speed or 1
+        self.fadeIn = math.max(fade or 0.1, 0.001)
+        self.stopT = nil
+        self.IsPlaying = true
+    end
+    function tr:Stop(fade)
+        if not self.IsPlaying or self.stopT then return end
+        fade = fade or 0.1
+        if fade <= 0 then
+            self.IsPlaying = false
+            release()
+            return
+        end
+        self.stopT = os.clock()
+        self.fadeOut = fade
+    end
+    function tr:step(now)
+        local el = (now - self.t0) * self.speed
+        if el >= self.Length then
+            if self.Looped then
+                el = el % self.Length
+                self.t0 = now - el / self.speed
+            else
+                self.IsPlaying = false
+                release()
+                return
+            end
+        end
+        local w = math.min(1, (now - self.t0) / self.fadeIn)
+        if self.stopT then
+            w = w * (1 - (now - self.stopT) / self.fadeOut)
+            if w <= 0 then
+                self.IsPlaying = false
+                release()
+                return
+            end
+        end
+        for name, arr in pairs(joints) do
+            local m = motors[name]
+            local cf = sampleJoint(arr, el)
+            local cur = m.Transform
+            local base = cur
+            if (last[name] ~= nil and cur == last[name]) or (rest[name] and isID(cur)) then
+                base = rest[name] or ID
+            end
+            m.Transform = (w >= 0.999) and cf or base:Lerp(cf, w)
+            last[name] = m.Transform
+        end
+    end
+    return tr
+end
+
+local function loadAnimations()
+    if not (CONFIG.UseAnimations and R.canAnimate and R.animator) then return end
+    local src, from = {}, "ids"
+    local path = ensureFile(CONFIG.AnimFileName)
+    if path then
+        local objs = loadObjects(path)
+        if objs then
+            for _, o in ipairs(objs) do
+                local list = o:GetDescendants()
+                list[#list + 1] = o
+                for _, d in ipairs(list) do
+                    if d:IsA("Animation") and d.AnimationId ~= "" then
+                        local key = d.Name:match("_(.+)$") or d.Name
+                        src[key] = d
+                        from = "file " .. path
+                    end
+                end
+            end
+        end
+    end
+    local kfSrc, skip = {}, {}
+    for _, def in ipairs({
+        { "Reload",  CONFIG.ReloadAnimFile },
+        { "Inspect", CONFIG.InspectAnimFile },
+    }) do
+        local key = def[1]
+        local p = ensureFile(def[2])
+        local objs = p and loadObjects(p)
+        local ks
+        for _, o in ipairs(objs or {}) do
+            if not ks then
+                ks = o:IsA("KeyframeSequence") and o or o:FindFirstChildWhichIsA("KeyframeSequence", true)
+            end
+        end
+        if ks then
+            kfSrc[key] = ks
+            local okR, id = pcall(function() return KSP:RegisterKeyframeSequence(ks) end)
+            if okR and type(id) == "string" and id ~= "" then
+                local a = Instance.new("Animation")
+                a.Name = "Brocklin_" .. key
+                a.AnimationId = id
+                src[key] = a
+                A.custom[key] = "engine"
+            else
+                src[key] = nil
+                skip[key] = true
+            end
+        end
+    end
+    for name, id in pairs(ANIM_IDS) do
+        if not src[name] and not skip[name] then
+            local a = Instance.new("Animation")
+            a.Name = "Brocklin_" .. name
+            a.AnimationId = id
+            src[name] = a
+        end
+    end
+    for name, anim in pairs(src) do
+        local ok, tr = pcall(function() return R.animator:LoadAnimation(anim) end)
+        if ok and tr then
+            pcall(function() tr.Priority = animPriority(name) end)
+            A.tracks[name] = tr
+        end
+    end
+    local t0 = os.clock()
+    while os.clock() - t0 < CONFIG.AnimLoadTime do
+        local pending = false
+        for _, tr in pairs(A.tracks) do
+            if tr.Length <= 0 then pending = true end
+        end
+        if not pending then break end
+        task.wait(0.1)
+    end
+    local motors, rest
+    for key, ks in pairs(kfSrc) do
+        local tr = A.tracks[key]
+        if not tr or tr.Length <= 0 then
+            if not motors then
+                motors = {}
+                rest = {}
+                for name, b in pairs(R.body) do rest[name] = b.hipT end
+                for name, b in pairs(R.body) do if b.m6 then motors[name] = b.m6 end end
+                for name, j in pairs(R.J) do if j.m6 then motors[name] = j.m6 end end
+            end
+            if tr then pcall(function() tr:Stop(0) end) end
+            local okK, kt = pcall(newKFTrack, ks, motors, rest)
+            if okK and kt then
+                A.tracks[key] = kt
+                A.kf[key] = true
+                A.custom[key] = "player"
+            else
+                warn("[RevolverFPS] new " .. key .. " animation could not be loaded")
+            end
+        end
+    end
+    local n = 0
+    for name, tr in pairs(A.tracks) do
+        if tr.Length > 0 then A.ok[name] = true; n = n + 1 end
+        dbg("animation", name, tr.Length > 0 and string.format("%.2fs", tr.Length) or "NOT LOADED")
+    end
+    A.on = n > 0
+    A.source = from
+    A.count = n
+end
+
+function A.fail(why)
+    if not A.on then return end
+    A.on, A.full = false, false
+    for _, tr in pairs(A.tracks) do pcall(function() tr:Stop(0) end) end
+    dbg("animations disabled:", why)
+end
+
+function A.play(name, fade, speed)
+    if not (A.on and A.ok[name]) then return nil end
+    local tr = A.tracks[name]
+    pcall(function()
+        tr.Looped = false
+        tr:Play(fade or 0.1, 1, speed or 1)
+    end)
+    if not A.checkT and tr.Length >= 0.4 and name ~= "Idle" then A.checkT = os.clock() + 0.6 end
+    return tr
+end
+
+function A.stop(name, fade)
+    local tr = A.tracks[name]
+    if tr then pcall(function() tr:Stop(fade or 0.15) end) end
+end
+
+function A.loop(name, on)
+    if not (A.on and A.ok[name]) then return end
+    if A.loops[name] == on then return end
+    A.loops[name] = on
+    local tr = A.tracks[name]
+    pcall(function()
+        if on then
+            tr.Looped = true
+            tr:Play(0.25)
+        else
+            tr:Stop(0.25)
+        end
+    end)
+end
+
+function A.length(name, speed)
+    local tr = A.tracks[name]
+    return tr and (tr.Length / (speed or 1)) or 0
+end
+
+function A.update(now)
+    if A.on then
+        for name in pairs(A.kf) do
+            local tr = A.tracks[name]
+            if tr and tr.IsPlaying then tr:step(now) end
+        end
+    end
+    if not A.on then A.full = false return end
+    local f = false
+    for name in pairs(FULL) do
+        local tr = A.tracks[name]
+        if tr and tr.IsPlaying then f = true break end
+    end
+    A.full = f
+    if A.checkT and not A.verified and now >= A.checkT then
+        if A.sawMotion then A.verified = true else A.fail("rig did not move") end
+    end
+end
+
+local function slotAt(c) return ORDER[(c % N) + 1] end
+local function countLive()
+    local n = 0
+    for _, s in ipairs(ORDER) do if s.state == "live" then n = n + 1 end end
+    return n
+end
+local function refreshSlots()
+    for _, s in ipairs(ORDER) do
+        local showB = (s.state == "live" or s.state == "loading")
+        s.bullet.Transparency = showB and 0 or 1
+        s.casing.Transparency = (s.state == "spent") and 0 or 1
+    end
+end
+
+local OB = { on = false }
+local WHITE = Color3.new(1, 1, 1)
+
+local function spareMags()
+    if CONFIG.InfiniteReserve then return 3, 0 end
+    return math.floor(S.reserve / N), S.reserve % N
+end
+
+function OB.hideMagCheck()
+    if OB.on and OB.magCheck then OB.magCheck.Visible = false end
+end
+
+function OB.setVisible(v)
+    if OB.on and OB.gui and OB.gui.Enabled ~= v then OB.gui.Enabled = v end
+end
+
+function OB.showMagCheck()
+    if not (OB.on and OB.magCheck) then return end
+    local mags, rem = spareMags()
+    if OB.magLeft then OB.magLeft.Text = CONFIG.InfiniteReserve and "+" or tostring(mags + (rem > 0 and 1 or 0)) end
+    if OB.ammoLeft then OB.ammoLeft.Text = CONFIG.InfiniteReserve and "INF" or tostring(S.reserve) end
+    if OB.filling then OB.filling.Size = UDim2.new(1, 0, math.clamp(countLive() / N, 0, 1), 0) end
+    OB.magCheck.Visible = true
+end
+
+function OB.setFiremode(mode)
+    if not (OB.on and OB.fire) then return end
+    for _, nm in ipairs({ "Semi", "Auto", "Burst" }) do
+        local f = OB.fire:FindFirstChild(nm)
+        if f then
+            local on = (nm == mode)
+            local st = f:FindFirstChildOfClass("UIStroke")
+            if st then st.Enabled = on end
+            f.BackgroundColor3 = on and WHITE or Color3.new(0, 0, 0)
+        end
+    end
+end
+
+function OB.refresh()
+    if not OB.on then return end
+    local live = countLive()
+    local inf = CONFIG.InfiniteReserve
+    local mags, rem = spareMags()
+    if OB.name then OB.name.Text = "Brocklin R5" end
+    if OB.cal then OB.cal.Text = ".500 Magnum" end
+    if OB.total then OB.total.Text = inf and "+" or tostring(mags) end
+
+    local key = inf and "inf" or (mags .. ":" .. rem)
+    if key ~= OB.key then
+        OB.key = key
+        for _, c in ipairs(OB.mags:GetChildren()) do
+            if c.Name == "MagazineClone" then c:Destroy() end
+        end
+        if OB.template and not inf then
+            local n = math.min(3, mags + (rem > 0 and 1 or 0))
+            for i = 1, n do
+                local c = OB.template:Clone()
+                c.Name = "MagazineClone"
+                c.Visible = true
+                c.Parent = OB.mags
+                local f = (i ~= n or rem <= 0) and 1 or rem / N
+                if mags == 0 and rem > 0 then f = rem / N end
+                local fill = c:FindFirstChild("Fill")
+                if fill then
+                    fill.Size = UDim2.new(1, 0, f, 0)
+                    fill.Position = UDim2.new(0, 0, 1 - f, 0)
+                end
+            end
+        end
+        if OB.plus then OB.plus.Visible = (not inf) and mags > 3 end
+    end
+
+    if OB.cur then
+        local total = live + (inf and 1 or S.reserve)
+        OB.cur.Visible = total > 0
+        if OB.curPlus then OB.curPlus.Visible = false end
+        if OB.curFill and OB.fillKey ~= live then
+            local first = OB.fillKey == nil
+            OB.fillKey = live
+            local f = math.clamp(live / N, 0, 1)
+            local col = f > 0.6 and WHITE or (f > 0.3 and Color3.fromRGB(255, 200, 140) or Color3.fromRGB(255, 80, 80))
+            local goal = { Size = UDim2.new(1, 0, f, 0), Position = UDim2.new(0, 0, 1 - f, 0), BackgroundColor3 = col }
+            if first then
+                for k, v in pairs(goal) do OB.curFill[k] = v end
+            else
+                TweenService:Create(OB.curFill, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal):Play()
+            end
+        end
+    end
+    if OB.magCheck and OB.magCheck.Visible then OB.showMagCheck() end
+end
+
+local function refreshAmmoUI()
+    OB.refresh()
+    if not UI.bars then return end
+    for k = 1, N do
+        local s = slotAt(S.cursor + k)
+        local bar = UI.bars[k]
+        if bar then
+            if s.state == "live" then
+                bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                bar.BackgroundTransparency = 0.05
+            elseif s.state == "spent" then
+                bar.BackgroundColor3 = Color3.fromRGB(255, 120, 90)
+                bar.BackgroundTransparency = 0.55
+            else
+                bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                bar.BackgroundTransparency = 0.82
+            end
+        end
+    end
+    UI.count.Text = tostring(countLive())
+    UI.reserve.Text = CONFIG.InfiniteReserve and "/ INF" or ("/ " .. tostring(S.reserve))
+end
+
+local function rayParams()
+    local rp = RaycastParams.new()
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.IgnoreWater = true
+    local list = { R.model, fxFolder }
+    if LocalPlayer.Character then list[#list + 1] = LocalPlayer.Character end
+    rp.FilterDescendantsInstances = list
+    return rp
+end
+
+local function fxPart(size)
+    local p = Instance.new("Part")
+    p.Anchored = true
+    p.CanCollide = false
+    p.CanTouch = false
+    p.CanQuery = false
+    p.CastShadow = false
+    p.Material = Enum.Material.Neon
+    p.Size = size
+    p.Parent = fxFolder
+    return p
+end
+
+local function tracer(from, to)
+    local dist = (to - from).Magnitude
+    if dist < 0.5 then return end
+    local p = fxPart(Vector3.new(0.05, 0.05, dist))
+    p.Color = Color3.fromRGB(255, 214, 140)
+    p.CFrame = CFrame.lookAt(from, to) * CFrame.new(0, 0, -dist / 2)
+    TweenService:Create(p, TweenInfo.new(0.16), { Transparency = 1 }):Play()
+    Debris:AddItem(p, 0.3)
+end
+
+local function impact(pos, normal, hitPart)
+    local s = fxPart(Vector3.new(0.3, 0.3, 0.3))
+    s.Shape = Enum.PartType.Ball
+    s.Color = Color3.fromRGB(255, 200, 120)
+    s.Position = pos + normal * 0.05
+    TweenService:Create(s, TweenInfo.new(0.22), { Transparency = 1, Size = Vector3.new(0.05, 0.05, 0.05) }):Play()
+    Debris:AddItem(s, 0.3)
+    if hitPart and hitPart.Anchored then
+        local h = Instance.new("Part")
+        h.Anchored = true
+        h.CanCollide = false
+        h.CanTouch = false
+        h.CanQuery = false
+        h.CastShadow = false
+        h.Shape = Enum.PartType.Cylinder
+        h.Material = Enum.Material.SmoothPlastic
+        h.Color = Color3.fromRGB(15, 15, 15)
+        h.Size = Vector3.new(0.02, 0.24, 0.24)
+        h.CFrame = CFrame.lookAt(pos + normal * 0.01, pos + normal * 2) * CFrame.Angles(0, math.rad(90), 0)
+        h.Parent = fxFolder
+        Debris:AddItem(h, 12)
+    end
+end
+
+local function hitMarker()
+    if not UI.hit then return end
+    UI.hit.Visible = true
+    local token = {}
+    UI.hitToken = token
+    task.delay(0.12, function()
+        if UI.hitToken == token and UI.hit then UI.hit.Visible = false end
+    end)
+end
+
+local function muzzleFX()
+    local m = R.muzzle
+    if not m then return end
+    for _, e in ipairs(m:GetChildren()) do
+        if e:IsA("ParticleEmitter") then
+            local c = e:FindFirstChild("Particles")
+            local ok = pcall(function() e:Emit((c and c.Value) or 1) end)
+            if not ok then dbg("emit failed") end
+        end
+    end
+    local light = m:FindFirstChildOfClass("PointLight")
+    if light then
+        light.Enabled = true
+        task.delay(0.06, function() light.Enabled = false end)
+    end
+end
+
+local shells = {}
+
+local function ejectShells()
+    local cam = Workspace.CurrentCamera
+    for _, s in ipairs(ORDER) do
+        local src = nil
+        if s.state == "spent" then src = s.casing elseif s.state == "live" then src = s.bullet end
+        if src and cam then
+            local c = src:Clone()
+            c.Transparency = 0
+            c.Anchored = true
+            c.CanCollide = false
+            c.CanTouch = false
+            c.CanQuery = false
+            c.CastShadow = false
+            c.CFrame = src.CFrame
+            c.Parent = fxFolder
+            shells[#shells + 1] = {
+                p = c, age = 0, rest = false,
+                v = cam.CFrame:VectorToWorldSpace(Vector3.new(rnd(0.5, 2), rnd(0, 1.2), rnd(-1.5, 0.3))),
+                w = Vector3.new(rnd(-10, 10), rnd(-10, 10), rnd(-10, 10)),
+            }
+        end
+        s.state = "empty"
+    end
+    refreshSlots()
+end
+
+local function updateShells(dt)
+    local rp
+    for i = #shells, 1, -1 do
+        local s = shells[i]
+        s.age = s.age + dt
+        if s.age > 4 or not s.p.Parent then
+            pcall(function() s.p:Destroy() end)
+            table.remove(shells, i)
+        elseif not s.rest then
+            s.v = s.v + Vector3.new(0, -Workspace.Gravity, 0) * dt
+            local cf = s.p.CFrame
+            local rot = cf - cf.Position
+            local move = s.v * dt
+            rp = rp or rayParams()
+            local res = Workspace:Raycast(cf.Position, move, rp)
+            if res then
+                s.p.CFrame = CFrame.new(res.Position + res.Normal * 0.05) * rot
+                s.rest = true
+            else
+                local w = s.w * dt
+                s.p.CFrame = CFrame.new(cf.Position + move) * rot * CFrame.Angles(w.X, w.Y, w.Z)
+            end
+        end
+    end
+end
+
+local refreshButtons
+
+local function updateSpeed()
+    if not CONFIG.ControlWalkSpeed then return end
+    local hum = getHum()
+    if not hum then return end
+    if S.speedApplied and math.abs(hum.WalkSpeed - S.speedApplied) > 0.01 then
+        S.speedApplied, S.baseSpeed = nil, nil
+    end
+    if not S.baseSpeed then S.baseSpeed = hum.WalkSpeed end
+    local mult = 1
+    if S.running then mult = mult * CONFIG.SprintMult end
+    if S.crouch then mult = mult * CONFIG.CrouchMult end
+    if S.aimOn then mult = mult * CONFIG.AimMult end
+    if mult == 1 then
+        hum.WalkSpeed = S.baseSpeed
+        S.speedApplied, S.baseSpeed = nil, nil
+    else
+        S.speedApplied = S.baseSpeed * mult
+        hum.WalkSpeed = S.speedApplied
+    end
+end
+
+local function cancelInspect()
+    if not (S.inspecting or S.magchecking) then return end
+    S.inspectToken = nil
+    S.inspecting = false
+    if S.magchecking then
+        S.magchecking = false
+        OB.hideMagCheck()
+    end
+    A.stop("Inspect", 0.2)
+    A.stop("MagCheck", 0.2)
+    tween("ins", 0, 0.25)
+    tween("ins2", 0, 0.25)
+    tween("hammer", 0, 0.2)
+end
+
+local function setAim(on)
+    if on and (S.reloading) then return end
+    S.aimOn = on
+    if on then
+        S.running = false
+        cancelInspect()
+        sfx("AimUp")
+    else
+        sfx("AimDown")
+    end
+    updateSpeed()
+    refreshButtons()
+end
+
+local function setRun(on)
+    S.running = on
+    if on then
+        S.aimOn = false
+        S.crouch = false
+        cancelInspect()
+    end
+    updateSpeed()
+    refreshButtons()
+end
+
+local function setCrouch(on)
+    S.crouch = on
+    if on then S.running = false end
+    updateSpeed()
+    refreshButtons()
+end
+
+local function setLean(dir, down)
+    if down then
+        S.leanDir = dir
+    elseif S.leanDir == dir then
+        S.leanDir = 0
+    end
+end
+
+local function doShot()
+    local cam = Workspace.CurrentCamera
+    local aimE = smooth(P.aim)
+    sfx("Fire")
+    sfx("Echo")
+    muzzleFX()
+    local k = (1 - 0.4 * aimE) * (S.fireAnim and 0.55 or 1)
+    kickRot.v = kickRot.v + Vector3.new(rnd(2.4, 3.2) * k, rnd(-0.5, 0.5) * k, rnd(-0.6, 0.6) * k)
+    kickPos.v = kickPos.v + Vector3.new(rnd(-0.1, 0.1), rnd(0.1, 0.3), rnd(2.2, 3.0) * k)
+    camKick.v = camKick.v + Vector3.new(rnd(0.5, 0.7) * k, rnd(-0.12, 0.12), rnd(-0.1, 0.1))
+    P.fovKick = 3 * k
+    if not cam then return end
+    local spread = CONFIG.HipSpread + (CONFIG.AimSpread - CONFIG.HipSpread) * aimE
+    local cf = cam.CFrame * CFrame.Angles(rnd(-1, 1) * spread, rnd(-1, 1) * spread, 0)
+    local origin, dir = cam.CFrame.Position, cf.LookVector
+    local res = Workspace:Raycast(origin, dir * CONFIG.Range, rayParams())
+    local from = R.muzzle and R.muzzle.WorldPosition or origin
+    if res then
+        tracer(from, res.Position)
+        impact(res.Position, res.Normal, res.Instance)
+        local mdl = res.Instance and res.Instance:FindFirstAncestorWhichIsA("Model")
+        if mdl and mdl:FindFirstChildOfClass("Humanoid") then hitMarker() end
+    else
+        tracer(from, origin + dir * 300)
+    end
+end
+
+local function pullTrigger()
+    local now = os.clock()
+    if not S.alive or S.closing or S.reloading or now < S.nextShot then return end
+    S.nextShot = now + CONFIG.FireInterval
+    if S.running then setRun(false) end
+    cancelInspect()
+    S.cursor = S.cursor + 1
+    local slot = slotAt(S.cursor)
+    local cur = S.cursor
+    task.spawn(function()
+        local usePre = A.on and A.ok.PreFire
+        tween("hammer", 1, 0.05)
+        tween("trigger", 1, 0.05)
+        tween("spin", -SLOT_ANGLE * cur, 0.12)
+        sfx("PreFire")
+        if usePre then A.play("PreFire", 0.03) end
+        if not sleep(usePre and CONFIG.PreFireTime or 0.06) then return end
+        if slot.state == "live" then
+            slot.state = "spent"
+            refreshSlots()
+            S.fireAnim = false
+            if A.on and A.ok.Fire then
+                A.stop("PreFire", 0.05)
+                A.play("Fire", 0.03)
+                S.fireAnim = true
+            end
+            doShot()
+        else
+            sfx("Empty")
+        end
+        refreshAmmoUI()
+        tween("hammer", 0, 0.06)
+        tween("trigger", 0, 0.12)
+    end)
+end
+
+local function triggerDown()
+    S.trigger = true
+    pullTrigger()
+end
+local function triggerUp() S.trigger = false end
+
+local function reloadAnimated(ok)
+    local m = CONFIG.ReloadMarks
+    A.stop("Fire", 0.05)
+    A.stop("PreFire", 0.05)
+    A.play("Reload", 0.12)
+    local len = A.length("Reload")
+    local t0 = os.clock()
+    local function at(sec) return sleep(math.max(0, t0 + math.min(sec, len) - os.clock()), ok) end
+    local returned, total, newLive = 0, 0, 0
+    sfx("Move1")
+    local done = at(m.BoltOpen)
+    if done then sfx("BoltOpen") end
+    done = done and at(m.Hand)
+    if done then sfx("Hand") end
+    done = done and at(m.Casing)
+    if done then
+        returned = countLive()
+        ejectShells()
+        refreshAmmoUI()
+        total = returned + S.reserve
+        newLive = math.min(N, total)
+        if CONFIG.InfiniteReserve then newLive = N end
+    end
+    done = done and at(m.MagOut)
+    if done then sfx("MagOut") end
+    done = done and at(m.MagPouch)
+    if done then
+        for k = 1, newLive do slotAt(S.cursor + k).state = "loading" end
+        refreshSlots()
+        sfx("MagPouch")
+    end
+    done = done and at(m.MagIn)
+    if done then sfx("MagIn") end
+    done = done and at(m.Move2)
+    if done then
+        for k = 1, newLive do slotAt(S.cursor + k).state = "live" end
+        if not CONFIG.InfiniteReserve then S.reserve = total - newLive end
+        refreshSlots()
+        refreshAmmoUI()
+        sfx("Move2")
+    end
+    done = done and at(m.BoltClose)
+    if done then sfx("BoltClose") end
+    done = done and at(len)
+    if ok() then
+        S.reloading = false
+        S.token = nil
+        refreshButtons()
+    end
+end
+
+local function reload()
+    if S.reloading or not S.alive then return end
+    local live = countLive()
+    if live >= N then return end
+    if S.reserve <= 0 and not CONFIG.InfiniteReserve then sfx("Empty") return end
+    cancelInspect()
+    S.reloading = true
+    S.aimOn = false
+    if S.running then S.running = false end
+    updateSpeed()
+    refreshButtons()
+    local token = {}
+    S.token = token
+    local function ok() return alive(token) end
+    if A.on and A.ok.Reload then
+        task.spawn(function() reloadAnimated(ok) end)
+        return
+    end
+    task.spawn(function()
+        tween("tilt", 1, 0.35)
+        sfx("Raise")
+        if not sleep(0.35, ok) then return end
+        tween("swing", 1, 0.28)
+        sfx("BoltOpen")
+        if not sleep(0.3, ok) then return end
+        tween("extractor", 1, 0.12)
+        if not sleep(0.12, ok) then return end
+        local returned = countLive()
+        ejectShells()
+        sfx("MagOut")
+        sfx("Move1")
+        refreshAmmoUI()
+        tween("extractor", 0, 0.14)
+        if not sleep(0.2, ok) then return end
+
+        local total = returned + S.reserve
+        local newLive = math.min(N, total)
+        if CONFIG.InfiniteReserve then newLive = N end
+        for k = 1, newLive do slotAt(S.cursor + k).state = "loading" end
+        refreshSlots()
+
+        tween("hand", 1, 0.3)
+        sfx("MagPouch")
+        if not sleep(0.3, ok) then return end
+        tween("L", 1, 0.45)
+        if not sleep(0.45, ok) then return end
+        tween("Lin", 1, 0.22)
+        sfx("MagIn")
+        if not sleep(0.24, ok) then return end
+        for k = 1, newLive do slotAt(S.cursor + k).state = "live" end
+        if not CONFIG.InfiniteReserve then S.reserve = total - newLive end
+        refreshSlots()
+        refreshAmmoUI()
+        if not sleep(0.12, ok) then return end
+        tween("Lin", 0, 0.2)
+        sfx("Hand")
+        if not sleep(0.22, ok) then return end
+        tween("L", 0, 0.32)
+        tween("hand", 0, 0.32)
+        if not sleep(0.34, ok) then return end
+        tween("swing", 0, 0.26)
+        if not sleep(0.2, ok) then return end
+        sfx("BoltClose")
+        if not sleep(0.1, ok) then return end
+        tween("tilt", 0, 0.3)
+        if not sleep(0.32, ok) then return end
+        S.reloading = false
+        S.token = nil
+        refreshButtons()
+    end)
+end
+
+local function inspect()
+    if S.reloading or S.inspecting or S.magchecking or S.closing or not S.alive then return end
+    S.aimOn = false
+    if S.running then S.running = false end
+    updateSpeed()
+    refreshButtons()
+    local token = {}
+    S.inspectToken = token
+    S.inspecting = true
+    local function ok() return S.inspectToken == token end
+    if A.on and A.ok.Inspect then
+        task.spawn(function()
+            local len = A.length("Inspect")
+            A.play("Inspect", 0.15)
+            local t0 = os.clock()
+            for _, mk in ipairs(CONFIG.InspectMarks) do
+                if not sleep(math.max(0, t0 + math.min(mk[1], len) - os.clock()), ok) then return end
+                sfx(mk[2])
+            end
+            if not sleep(math.max(0, t0 + len - os.clock()), ok) then return end
+            S.inspecting = false
+            S.inspectToken = nil
+        end)
+        return
+    end
+    task.spawn(function()
+        tween("ins", 1, 0.55)
+        sfx("Inspect2")
+        if not sleep(0.6, ok) then return end
+        tween("hammer", 1, 0.15)
+        sfx("Click")
+        if not sleep(0.25, ok) then return end
+        tween("spin", P.spin - SLOT_ANGLE * 2, 0.45)
+        sfx("Inspect3")
+        if not sleep(0.7, ok) then return end
+        tween("ins2", 1, 0.6)
+        sfx("Inspect4")
+        if not sleep(1.1, ok) then return end
+        tween("hammer", 0, 0.12)
+        tween("ins2", 0, 0.5)
+        sfx("I4End")
+        if not sleep(0.5, ok) then return end
+        tween("ins", 0, 0.5)
+        sfx("Inspect5")
+        if not sleep(0.55, ok) then return end
+        S.inspecting = false
+        S.inspectToken = nil
+    end)
+end
+
+local function magCheck()
+    if S.reloading or S.inspecting or S.magchecking or S.closing or not S.alive then return end
+    S.aimOn = false
+    if S.running then S.running = false end
+    updateSpeed()
+    refreshButtons()
+    local token = {}
+    S.inspectToken = token
+    S.magchecking = true
+    local function ok() return S.inspectToken == token end
+    task.spawn(function()
+        local useAnim = A.on and A.ok.MagCheck
+        local dur = CONFIG.MagCheckTime
+        sfx("Inspect2")
+        if useAnim then
+            A.play("MagCheck", 0.15)
+            dur = math.max(0.8, A.length("MagCheck"))
+        else
+            tween("ins", 1, 0.4)
+        end
+        OB.showMagCheck()
+        if not sleep(dur, ok) then return end
+        OB.hideMagCheck()
+        if not useAnim then
+            tween("ins", 0, 0.4)
+            if not sleep(0.4, ok) then return end
+        end
+        S.magchecking = false
+        S.inspectToken = nil
+    end)
+end
+
+local function playEquip(first)
+    if A.on and (A.ok.Equip or A.ok.EquipFirst) then
+        local name = (first and A.ok.EquipFirst) and "EquipFirst" or (A.ok.Equip and "Equip" or "EquipFirst")
+        snap("equip", 1)
+        A.play(name, 0.05)
+    else
+        snap("equip", 0)
+        tween("equip", 1, 0.6)
+    end
+    sfx("Equip")
+end
+
+local function mountGui(gui)
+    pcall(function() if syn and syn.protect_gui then syn.protect_gui(gui) end end)
+    local targets = {}
+    if gethui then targets[#targets + 1] = function() return gethui() end end
+    targets[#targets + 1] = function() return game:GetService("CoreGui") end
+    targets[#targets + 1] = function() return LocalPlayer:WaitForChild("PlayerGui") end
+    for _, get in ipairs(targets) do
+        local okT, parent = pcall(get)
+        if okT and parent then
+            local okP = pcall(function() gui.Parent = parent end)
+            if okP and gui.Parent == parent then return true end
+        end
+    end
+    return false
+end
+
+function OB.load()
+    if not CONFIG.UseOBUI then return false end
+    local path, err = ensureFile(CONFIG.UIFileName)
+    if not path then dbg("OB_UI file:", err) return false end
+    local objs, why = loadObjects(path)
+    if not objs then dbg("OB_UI load:", why) return false end
+    local gui
+    for _, o in ipairs(objs) do
+        if not gui and o:IsA("ScreenGui") then gui = o else pcall(function() o:Destroy() end) end
+    end
+    if not gui then return false end
+    for _, d in ipairs(gui:GetDescendants()) do
+        if d:IsA("LuaSourceContainer") then pcall(function() d:Destroy() end) end
+    end
+    for _, n in ipairs({ "DamageUI", "TunnelVision", "AimVignette", "PickUpUI", "Ammo", "FiremodeCheck" }) do
+        local x = gui:FindFirstChild(n)
+        if x then x:Destroy() end
+    end
+    local ver = gui:FindFirstChild("Version")
+    if ver then ver.Visible = CONFIG.ShowVersion end
+    local mag = gui:FindFirstChild("MagUI")
+    local mags = mag and mag:FindFirstChild("Magazines")
+    if not (mag and mags) then pcall(function() gui:Destroy() end) return false end
+
+    OB.gui, OB.mag, OB.mags = gui, mag, mags
+    OB.name, OB.cal, OB.total = mag:FindFirstChild("WeaponName"), mag:FindFirstChild("Caliber"), mag:FindFirstChild("TotalMagCount")
+    OB.fire = mag:FindFirstChild("Firemodes")
+    OB.template, OB.plus = mags:FindFirstChild("Magazine"), mags:FindFirstChild("Plus")
+    OB.cur = mags:FindFirstChild("CurrentMagazine")
+    OB.curFill = OB.cur and OB.cur:FindFirstChild("Fill")
+    OB.curPlus = OB.cur and OB.cur:FindFirstChild("MagPlus")
+    local mc = gui:FindFirstChild("MagCheck")
+    if mc then
+        OB.magCheck = mc
+        OB.magLeft, OB.ammoLeft = mc:FindFirstChild("MagLeftText"), mc:FindFirstChild("AmmoLeftText")
+        local m = mc:FindFirstChild("Mag")
+        OB.filling = m and m:FindFirstChild("Filling")
+        local lay = m and m:FindFirstChildOfClass("UIListLayout")
+        if lay then pcall(function() lay.VerticalAlignment = Enum.VerticalAlignment.Bottom end) end
+        local pa = mc:FindFirstChild("PlusAmmo")
+        if pa then pa.Visible = false end
+        local wb = mc:FindFirstChild("WhiteBackground")
+        if wb then wb.Visible = false end
+        mc.Visible = false
+    end
+    pcall(function() gui.ResetOnSpawn = false end)
+    pcall(function() gui:SetAttribute("RevolverFPS", true) end)
+
+    local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
+    if pg then
+        for _, c in ipairs(pg:GetChildren()) do
+            local okA, mine = pcall(function() return c:GetAttribute("RevolverFPS") end)
+            if okA and mine and c ~= gui then pcall(function() c:Destroy() end) end
+        end
+    end
+    local parented = false
+    if pg then
+        local okP = pcall(function() gui.Parent = pg end)
+        parented = okP and gui.Parent == pg
+    end
+    if not parented and not mountGui(gui) then
+        pcall(function() gui:Destroy() end)
+        OB.gui = nil
+        return false
+    end
+    OB.on = true
+    OB.setFiremode(CONFIG.Automatic and "Auto" or "Semi")
+    OB.refresh()
+    return true
+end
+
+local DEVICE = "PC"
+
+local function detectDevice()
+    local forced = CONFIG.Device
+    if forced == "Mobile" or forced == "Tablet" or forced == "PC" then return forced end
+    if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+        local cam = Workspace.CurrentCamera
+        local v = cam and cam.ViewportSize or Vector2.new(800, 400)
+        return (math.min(v.X, v.Y) >= 600) and "Tablet" or "Mobile"
+    end
+    return "PC"
+end
+
+local ICONS = {}
+do
+    local WHITE = Color3.new(1, 1, 1)
+
+    local function shape(parent, cx, cy, w, h, rot, round, ring)
+        local f = Instance.new("Frame")
+        f.AnchorPoint = Vector2.new(0.5, 0.5)
+        f.Position = UDim2.fromScale(cx, cy)
+        f.Size = UDim2.fromScale(w, h)
+        f.Rotation = rot or 0
+        f.BorderSizePixel = 0
+        f.Active = false
+        if ring then
+            f.BackgroundTransparency = 1
+            local st = Instance.new("UIStroke")
+            st.Color = WHITE
+            st.Thickness = ring
+            st.Parent = f
+        else
+            f.BackgroundColor3 = WHITE
+        end
+        if round then
+            local c = Instance.new("UICorner")
+            c.CornerRadius = UDim.new(round, 0)
+            c.Parent = f
+        end
+        f.Parent = parent
+        return f
+    end
+
+    local function lean(box, dir)
+        local a = math.rad(18) * dir
+        shape(box, 0.5, 0.6, 0.14, 0.62, 18 * dir, 0.5)
+        shape(box, 0.5 + math.sin(a) * 0.46, 0.6 - math.cos(a) * 0.46, 0.26, 0.26, 0, 0.5)
+    end
+    local function chevron(box, x0)
+        shape(box, x0 + 0.125, 0.325, 0.44, 0.12, 55, 0.5)
+        shape(box, x0 + 0.125, 0.675, 0.44, 0.12, -55, 0.5)
+    end
+
+    ICONS.PeekL = function(box) lean(box, -1) end
+    ICONS.PeekR = function(box) lean(box, 1) end
+    ICONS.Crouch = function(box)
+        shape(box, 0.325, 0.34, 0.56, 0.13, 45, 0.5)
+        shape(box, 0.675, 0.34, 0.56, 0.13, -45, 0.5)
+        shape(box, 0.5, 0.84, 0.78, 0.12, 0, 0.5)
+    end
+    ICONS.Run = function(box)
+        chevron(box, 0.22)
+        chevron(box, 0.52)
+    end
+    ICONS.Reload = function(box, th)
+        shape(box, 0.5, 0.5, 0.9, 0.9, 0, 0.5, th)
+        shape(box, 0.5, 0.5, 0.13, 0.13, 0, 0.5)
+        for k = 0, 4 do
+            local a = math.rad(-90 + 72 * k)
+            shape(box, 0.5 + math.cos(a) * 0.27, 0.5 + math.sin(a) * 0.27, 0.17, 0.17, 0, 0.5)
+        end
+    end
+    ICONS.Shoot = function(box, th)
+        shape(box, 0.5, 0.5, 0.9, 0.9, 0, 0.5, th)
+        shape(box, 0.5, 0.5, 0.46, 0.46, 0, 0.5)
+    end
+    ICONS.Aim = function(box, th)
+        shape(box, 0.5, 0.5, 0.58, 0.58, 0, 0.5, th)
+        shape(box, 0.5, 0.1, 0.1, 0.24, 0, 0.5)
+        shape(box, 0.5, 0.9, 0.1, 0.24, 0, 0.5)
+        shape(box, 0.1, 0.5, 0.24, 0.1, 0, 0.5)
+        shape(box, 0.9, 0.5, 0.24, 0.1, 0, 0.5)
+        shape(box, 0.5, 0.5, 0.1, 0.1, 0, 0.5)
+    end
+    ICONS.Inspect = function(box, th)
+        shape(box, 0.42, 0.42, 0.56, 0.56, 0, 0.5, th)
+        shape(box, 0.78, 0.78, 0.36, 0.12, 45, 0.5)
+    end
+    ICONS.MagCheck = function(box, th)
+        shape(box, 0.5, 0.5, 0.5, 0.88, 0, 0.18, th)
+        for _, y in ipairs({ 0.3, 0.5, 0.7 }) do
+            shape(box, 0.5, y, 0.26, 0.09, 0, 0.5)
+        end
+    end
+    ICONS.Unload = function(box)
+        shape(box, 0.5, 0.5, 0.95, 0.13, 45, 0.5)
+        shape(box, 0.5, 0.5, 0.95, 0.13, -45, 0.5)
+    end
+end
+
+local function circle(name, px, py, size, onDown, onUp)
+    local cam = Workspace.CurrentCamera
+    local vp = cam and cam.ViewportSize or Vector2.new(800, 400)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.AnchorPoint = Vector2.new(0.5, 0.5)
+    b.Position = UDim2.new(px, 0, py, CONFIG.UIOffsetY)
+    b.SizeConstraint = Enum.SizeConstraint.RelativeYY
+    b.Size = UDim2.new(size, 0, size, 0)
+    b.BackgroundColor3 = Color3.new(0, 0, 0)
+    b.BackgroundTransparency = 0.1
+    b.AutoButtonColor = false
+    b.Active = true
+    b.Text = ""
+    b.Parent = UI.gui
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = b
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.new(1, 1, 1)
+    stroke.Parent = b
+
+    local box = Instance.new("Frame")
+    box.AnchorPoint = Vector2.new(0.5, 0.5)
+    box.Position = UDim2.new(0.5, 0, 0.5, 0)
+    box.Size = UDim2.new(0.54, 0, 0.54, 0)
+    box.BackgroundTransparency = 1
+    box.Active = false
+    box.Parent = b
+    local th = math.max(2, math.floor(vp.Y * size * 0.54 * 0.085 + 0.5))
+    if ICONS[name] then ICONS[name](box, th) end
+
+    local e = { b = b, stroke = stroke, active = false, down = false }
+    UI.btn[name] = e
+    e.restyle = function()
+        local on = e.active or e.down
+        stroke.Thickness = on and 3 or 1.5
+        stroke.Transparency = on and 0 or 0.45
+    end
+    e.restyle()
+
+    local function press(input)
+        local t = input.UserInputType
+        if t ~= Enum.UserInputType.Touch and t ~= Enum.UserInputType.MouseButton1 then return end
+        local released = false
+        local function release()
+            if released then return end
+            released = true
+            e.down = false
+            e.restyle()
+            if onUp then onUp() end
+        end
+        e.down = true
+        e.restyle()
+        if onDown then onDown() end
+        local c
+        c = input:GetPropertyChangedSignal("UserInputState"):Connect(function()
+            if input.UserInputState == Enum.UserInputState.End or input.UserInputState == Enum.UserInputState.Cancel then
+                c:Disconnect()
+                release()
+            end
+        end)
+        local en
+        en = b.InputEnded:Connect(function(i)
+            if i == input then
+                en:Disconnect()
+                release()
+            end
+        end)
+    end
+    track(b.InputBegan:Connect(press))
+    return b
+end
+
+refreshButtons = function()
+    local function mark(name, on)
+        local e = UI.btn[name]
+        if not e then return end
+        e.active = on and true or false
+        e.restyle()
+    end
+    mark("Aim", S.aimOn)
+    mark("Run", S.running)
+    mark("Crouch", S.crouch)
+end
+
+local function buildUI()
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "RevolverFPS_UI"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.DisplayOrder = 50
+    pcall(function() gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling end)
+    if DEVICE ~= "PC" then
+        pcall(function() gui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets end)
+    end
+    UI.gui = gui
+    if not mountGui(gui) then dbg("could not mount gui") end
+    if not CONFIG.ShowUI then return end
+
+    local dot = Instance.new("Frame")
+    dot.AnchorPoint = Vector2.new(0.5, 0.5)
+    dot.Position = UDim2.new(0.5, 0, 0.5, 0)
+    dot.Size = UDim2.new(0, 5, 0, 5)
+    dot.BackgroundColor3 = Color3.new(1, 1, 1)
+    dot.BorderSizePixel = 0
+    dot.Parent = gui
+    local dc = Instance.new("UICorner")
+    dc.CornerRadius = UDim.new(1, 0)
+    dc.Parent = dot
+    local ds = Instance.new("UIStroke")
+    ds.Thickness = 1
+    ds.Parent = dot
+    UI.dot = dot
+
+    local hit = Instance.new("Frame")
+    hit.BackgroundTransparency = 1
+    hit.AnchorPoint = Vector2.new(0.5, 0.5)
+    hit.Position = UDim2.new(0.5, 0, 0.5, 0)
+    hit.Size = UDim2.new(0, 30, 0, 30)
+    hit.Visible = false
+    hit.Parent = gui
+    for _, rot in ipairs({ 45, -45 }) do
+        local l = Instance.new("Frame")
+        l.AnchorPoint = Vector2.new(0.5, 0.5)
+        l.Position = UDim2.new(0.5, 0, 0.5, 0)
+        l.Size = UDim2.new(1, 0, 0, 3)
+        l.Rotation = rot
+        l.BackgroundColor3 = Color3.new(1, 1, 1)
+        l.BorderSizePixel = 0
+        l.Parent = hit
+    end
+    UI.hit = hit
+
+    local touchUI = DEVICE ~= "PC"
+    local k = (DEVICE == "Mobile") and 1.25 or 1
+    if touchUI then
+        circle("PeekL", 0.05, 0.50, 0.093 * k, function() setLean(-1, true) end, function() setLean(-1, false) end)
+        circle("Crouch", 0.15, 0.50, 0.093 * k, function() setCrouch(not S.crouch) end, nil)
+        circle("PeekR", 0.25, 0.50, 0.093 * k, function() setLean(1, true) end, function() setLean(1, false) end)
+        circle("Run", 0.25, 0.82, 0.10 * k, function() setRun(not S.running) end, nil)
+
+        circle("Reload", 0.88, 0.34, 0.093 * k, function() reload() end, nil)
+        circle("Shoot", 0.88, 0.60, 0.115 * k, triggerDown, triggerUp)
+        circle("Aim", 0.71, 0.84, 0.093 * k, function() setAim(not S.aimOn) end, nil)
+        circle("Inspect", 0.67, 0.50, 0.075 * k, function() inspect() end, nil)
+        circle("MagCheck", 0.67, 0.68, 0.075 * k, function() magCheck() end, nil)
+    end
+    circle("Unload", 0.93, 0.08, touchUI and (0.05 * k) or 0.04,
+        function() if genv.RevolverFPS then genv.RevolverFPS.Close() end end, nil)
+
+    local panel = Instance.new("Frame")
+    panel.Name = "Ammo"
+    panel.Visible = not OB.on
+    panel.BackgroundTransparency = 1
+    panel.AnchorPoint = Vector2.new(1, 1)
+    panel.Position = UDim2.new(0.985, 0, 0.93, CONFIG.UIOffsetY)
+    panel.SizeConstraint = Enum.SizeConstraint.RelativeYY
+    panel.Size = UDim2.new(0.36, 0, 0.17, 0)
+    panel.Parent = gui
+
+    local function label(txt, y, h, align, color, font)
+        local l = Instance.new("TextLabel")
+        l.BackgroundTransparency = 1
+        l.Position = UDim2.new(0, 0, y, 0)
+        l.Size = UDim2.new(1, 0, h, 0)
+        l.Text = txt
+        l.TextScaled = true
+        l.TextXAlignment = align
+        l.TextColor3 = color
+        l.Font = font
+        l.Parent = panel
+        return l
+    end
+    label("Brocklin R5", 0, 0.28, Enum.TextXAlignment.Right, Color3.fromRGB(235, 235, 235), Enum.Font.GothamBold)
+    label(".500 Magnum", 0.28, 0.2, Enum.TextXAlignment.Right, Color3.fromRGB(190, 190, 190), Enum.Font.Gotham)
+
+    local barsFrame = Instance.new("Frame")
+    barsFrame.BackgroundTransparency = 1
+    barsFrame.Position = UDim2.new(0, 0, 0.55, 0)
+    barsFrame.Size = UDim2.new(0.55, 0, 0.42, 0)
+    barsFrame.Parent = panel
+    UI.bars = {}
+    for k = 1, N do
+        local bar = Instance.new("Frame")
+        bar.BorderSizePixel = 0
+        bar.Size = UDim2.new(0.15, 0, 1, 0)
+        bar.Position = UDim2.new((k - 1) * 0.2, 0, 0, 0)
+        bar.Parent = barsFrame
+        local bc = Instance.new("UICorner")
+        bc.CornerRadius = UDim.new(0, 3)
+        bc.Parent = bar
+        UI.bars[k] = bar
+    end
+    local count = Instance.new("TextLabel")
+    count.BackgroundTransparency = 1
+    count.Position = UDim2.new(0.55, 0, 0.5, 0)
+    count.Size = UDim2.new(0.2, 0, 0.5, 0)
+    count.TextScaled = true
+    count.TextXAlignment = Enum.TextXAlignment.Right
+    count.TextColor3 = Color3.new(1, 1, 1)
+    count.Font = Enum.Font.GothamBold
+    count.Parent = panel
+    UI.count = count
+    local reserve = Instance.new("TextLabel")
+    reserve.BackgroundTransparency = 1
+    reserve.Position = UDim2.new(0.76, 0, 0.62, 0)
+    reserve.Size = UDim2.new(0.24, 0, 0.3, 0)
+    reserve.TextScaled = true
+    reserve.TextXAlignment = Enum.TextXAlignment.Left
+    reserve.TextColor3 = Color3.fromRGB(200, 200, 200)
+    reserve.Font = Enum.Font.Gotham
+    reserve.Parent = panel
+    UI.reserve = reserve
+    refreshAmmoUI()
+    refreshButtons()
+end
+
+local function bindInput()
+    track(UserInputService.InputBegan:Connect(function(input, gp)
+        if gp then return end
+        local t = input.UserInputType
+        if t == Enum.UserInputType.MouseButton1 then
+            triggerDown()
+        elseif t == Enum.UserInputType.MouseButton2 then
+            setAim(true)
+        elseif t == Enum.UserInputType.Keyboard then
+            local k = input.KeyCode
+            if k == Enum.KeyCode.R then reload()
+            elseif k == Enum.KeyCode.F then inspect()
+            elseif k == Enum.KeyCode.T then magCheck()
+            elseif k == Enum.KeyCode.C or k == Enum.KeyCode.LeftControl then setCrouch(not S.crouch)
+            elseif k == Enum.KeyCode.LeftShift then setRun(true)
+            elseif k == Enum.KeyCode.Q then setLean(-1, true)
+            elseif k == Enum.KeyCode.E then setLean(1, true)
+            end
+        end
+    end))
+    track(UserInputService.InputEnded:Connect(function(input)
+        local t = input.UserInputType
+        if t == Enum.UserInputType.MouseButton1 then
+            triggerUp()
+        elseif t == Enum.UserInputType.MouseButton2 then
+            if S.aimOn then setAim(false) end
+        elseif t == Enum.UserInputType.Keyboard then
+            local k = input.KeyCode
+            if k == Enum.KeyCode.LeftShift then setRun(false)
+            elseif k == Enum.KeyCode.Q then setLean(-1, false)
+            elseif k == Enum.KeyCode.E then setLean(1, false)
+            end
+        end
+    end))
+end
+
+local function armCF(hand, dir)
+    dir = dir.Unit
+    local center = hand - dir
+    return CFrame.lookAt(center, center + dir) * CFrame.Angles(math.pi / 2, 0, 0)
+end
+
+local function ringTransform(swing, spin)
+    local sw = CFrame.new(HINGE.X, HINGE.Y, 0) * CFrame.Angles(0, 0, SWING_ANGLE * swing) * CFrame.new(-HINGE.X, -HINGE.Y, 0)
+    local sp = CFrame.new(R.cyl.X, R.cyl.Y, 0) * CFrame.Angles(0, 0, spin) * CFrame.new(-R.cyl.X, -R.cyl.Y, 0)
+    return sw, sw * sp
+end
+
+local function poseRig(gcf, camCF, W, arms)
+    local parts, J = R.parts, R.J
+    local sw, ring = ringTransform(P.swing, P.spin)
+    local INS = ring * R.loaderC0
+    local READY = INS * CFrame.new(0, 0, 0.55)
+    local LP = R.PARK:Lerp(READY, smooth(P.L)):Lerp(INS, smooth(P.Lin))
+
+    parts.Grip.CFrame = gcf
+    if A.on and A.full then
+        local cj = J.Cylinder
+        local cylT = cj.m6 and cj.m6.Transform or ID
+        local cylFrame = gcf * cj.c0 * cylT
+        local spinAbout = cylFrame * CFrame.fromAxisAngle(R.cylAxis, P.spin) * cylFrame:Inverse()
+        local cylDelta = (cj.c0 * cylT * cj.c1i) * (cj.c0 * cj.c1i):Inverse()
+        local loading = {}
+        for _, s in ipairs(ORDER) do
+            if s.state == "loading" then loading[s.bj] = true end
+        end
+        for _, j in ipairs(R.joints) do
+            local T = j.m6 and j.m6.Transform or ID
+            local cf
+            if j.ring and j ~= cj and not loading[j] and isID(T) then
+                cf = gcf * cylDelta * j.c0 * j.c1i
+            else
+                cf = gcf * j.c0 * T * j.c1i
+            end
+            if j.ring and not loading[j] then cf = spinAbout * cf end
+            j.p1.CFrame = cf
+        end
+        local rl = A.tracks.Reload
+        parts.Loader.Transparency = (rl and rl.IsPlaying) and 0 or 1
+    else
+        J.Hammer.tr = CFrame.new(0, -0.07, -0.06) * CFrame.Angles(math.rad(-38) * P.hammer, 0, 0) * CFrame.new(0, 0.07, 0.06)
+        J.Trigger.tr = CFrame.new(0, 0.08, 0.02) * CFrame.Angles(math.rad(18) * P.trigger, 0, 0) * CFrame.new(0, -0.08, -0.02)
+        J.Cylinder.pre = ring
+        J.Crane.pre = sw
+        J.Extractor.pre = ring
+        J.Extractor.tr = CFrame.new(0, 0, 0.3 * P.extractor)
+        J.Loader.pre = nil
+        J.Loader.tr = R.loaderC0:Inverse() * LP
+        for _, s in ipairs(ORDER) do
+            if s.state == "loading" then
+                s.bj.pre = nil
+                s.bj.tr = s.bj.c0:Inverse() * LP * s.relB
+            else
+                s.bj.pre = ring
+                s.bj.tr = ID
+            end
+            s.cj.pre = ring
+            s.cj.tr = ID
+        end
+        parts.Loader.Transparency = (P.L > 0.01) and 0 or 1
+        for _, j in ipairs(R.joints) do
+            j.p1.CFrame = gcf * (j.pre or ID) * j.c0 * j.tr * j.c1i
+        end
+    end
+
+    if P.hand > 0.001 then
+        local shoulder = R.HIP:PointToObjectSpace(Vector3.new(-0.9, -1.1, 0.4))
+        local hand = LP * Vector3.new(0, -0.1, 0.2)
+        local hold = armCF(hand, hand - shoulder)
+        parts["Left Arm"].CFrame = gcf * R.LEFT:Lerp(hold, smooth(P.hand))
+    elseif arms then
+        parts["Left Arm"].CFrame = W * arms.l
+    else
+        parts["Left Arm"].CFrame = gcf * R.LEFT
+    end
+    parts["Right Arm"].CFrame = arms and (W * arms.r) or (gcf * R.RIGHT)
+    parts.AnimBase.CFrame = camCF
+    parts.FakeCamera.CFrame = camCF
+end
+
+local function rescanCharacter(char)
+    S.charParts = {}
+    for _, d in ipairs(char:GetDescendants()) do
+        if d:IsA("BasePart") and not d:FindFirstAncestorWhichIsA("Tool") then
+            S.charParts[#S.charParts + 1] = d
+        end
+    end
+end
+
+local function preCamera()
+    if not S.alive then return end
+    local cam = Workspace.CurrentCamera
+    if cam and S.lastOut and S.lastBase and cam.CFrame == S.lastOut then
+        cam.CFrame = S.lastBase
+    end
+end
+
+local function step(dt)
+    if not S.alive then return end
+    dt = math.min(dt, 0.1)
+    local now = os.clock()
+    local cam = Workspace.CurrentCamera
+    if not cam then return end
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not hum or hum.Health <= 0 or not root then
+        S.lastOut = nil
+        if R.model.Parent then R.model.Parent = nil end
+        OB.setVisible(false)
+        return
+    end
+    OB.setVisible(true)
+    if R.model.Parent ~= cam then R.model.Parent = cam end
+
+    for key, tw in pairs(TW) do
+        local a = (now - tw.t0) / tw.dur
+        if a >= 1 then
+            P[key] = tw.to
+            TW[key] = nil
+        else
+            P[key] = tw.from + (tw.to - tw.from) * smooth(a)
+        end
+    end
+
+    updateShells(dt)
+
+    local vel = root.AssemblyLinearVelocity
+    local speed = math.sqrt(vel.X * vel.X + vel.Z * vel.Z)
+    local grounded = hum.FloorMaterial ~= Enum.Material.Air
+    local moving = speed > 1.5 and grounded
+    local sprinting = S.running and moving and not S.aimOn and not S.reloading and not S.inspecting
+
+    local base = cam.CFrame
+    if S.lastOut and base == S.lastOut then base = S.lastBase end
+
+    local aimTarget = (S.aimOn and not S.reloading and not sprinting) and 1 or 0
+    P.aim = approach(P.aim, aimTarget, dt / CONFIG.AimTime)
+    P.sprint = approach(P.sprint, sprinting and 1 or 0, dt / 0.22)
+    P.crouch = approach(P.crouch, S.crouch and 1 or 0, dt / 0.25)
+    P.fovKick = (P.fovKick or 0) * math.max(0, 1 - dt * 9)
+
+    local leanTarget = S.leanDir
+    if leanTarget ~= 0 then
+        local res = Workspace:Raycast(base.Position, base.RightVector * leanTarget * (CONFIG.LeanDistance + 0.35), rayParams())
+        if res then
+            leanTarget = leanTarget * math.clamp((res.Distance - 0.35) / CONFIG.LeanDistance, 0, 1)
+        end
+    end
+    P.lean = approach(P.lean, leanTarget, dt / 0.18)
+
+    local wallTarget = 0
+    if CONFIG.WallPush then
+        local res = Workspace:Raycast(base.Position, base.LookVector * 3.2, rayParams())
+        if res then wallTarget = math.clamp((3.2 - res.Distance) / 1.3, 0, 1) end
+    end
+    P.wall = approach(P.wall, wallTarget, dt / 0.15)
+
+    local aimE, spE, wallE, eqE = smooth(P.aim), smooth(P.sprint), smooth(P.wall), smooth(P.equip)
+    local crE, leanE = smooth(P.crouch), P.lean
+
+    if crE > 0.001 or S.camOffsetSet then
+        hum.CameraOffset = Vector3.new(0, -CONFIG.CrouchDrop * crE, 0)
+        S.camOffsetSet = crE > 0.001
+    end
+
+    if S.prevBase then
+        local d = S.prevBase:ToObjectSpace(base)
+        local rx, ry = d:ToEulerAnglesYXZ()
+        rx = math.clamp(rx, -0.25, 0.25)
+        ry = math.clamp(ry, -0.25, 0.25)
+        local g = 0.8 * (1 - 0.75 * aimE)
+        sway.p = sway.p + Vector3.new(-rx * g, -ry * g, -ry * g * 0.5)
+        local m = sway.p.Magnitude
+        if m > 0.14 then sway.p = sway.p * (0.14 / m) end
+    end
+    S.prevBase = base
+    local lv = cam.CFrame:VectorToObjectSpace(vel)
+    sway.p = sway.p + Vector3.new(0, 0, -math.clamp(lv.X, -20, 20) * 0.00035 * (1 - aimE))
+    stepSpring(sway, dt)
+    stepSpring(kickRot, dt)
+    stepSpring(kickPos, dt)
+    stepSpring(camKick, dt)
+
+    local bobAmp = (moving and math.clamp(speed / 16, 0, 1.6) or 0) * (1 - 0.8 * aimE) * (1 + spE * 0.8)
+    S.bobPhase = S.bobPhase + dt * (moving and (4 + speed * 0.42) or 0)
+    local ph = S.bobPhase
+    local bobPos = Vector3.new(math.sin(ph) * 0.03, math.sin(ph * 2) * 0.02, 0) * bobAmp
+        + Vector3.new(0, math.sin(now * 1.3) * 0.004 * (1 - aimE), 0)
+    local bobRot = Vector3.new(math.sin(ph * 2) * 0.012, math.sin(ph) * 0.02, math.sin(ph) * 0.012) * bobAmp
+
+    A.update(now)
+    local animBody = A.on
+    local fcT = nil
+    if animBody then
+        A.loop("Idle", true)
+        A.loop("Sprint", sprinting)
+        A.loop("HoldUp", wallE > 0.35 and not sprinting)
+        if not A.sawMotion then
+            for _, b in pairs(R.body) do
+                local T = b.m6.Transform
+                if T.Position.Magnitude > 0.002 or (T.LookVector - Vector3.new(0, 0, -1)).Magnitude > 0.002 then
+                    A.sawMotion = true
+                end
+            end
+        end
+        local fc = R.body.FakeCamera
+        if fc and CONFIG.CameraAnimation then
+            local d = (fc.c0 * fc.c1i):Inverse() * (fc.c0 * fc.m6.Transform * fc.c1i)
+            local rx, ry, rz = d:ToEulerAnglesYXZ()
+            local w = CONFIG.CameraAnimWeight * (1 - 0.6 * aimE)
+            local lim = math.rad(CONFIG.CameraAnimMaxDeg)
+            local target = CFrame.Angles(math.clamp(rx * w, -lim, lim), math.clamp(ry * w, -lim, lim), math.clamp(rz * w, -lim, lim))
+            S.fcSm = (S.fcSm or ID):Lerp(target, math.clamp(dt * 20, 0, 1))
+            fcT = S.fcSm
+        end
+    end
+    if not fcT then S.fcSm = nil end
+
+    local ck = camKick.p
+    local camOut = base
+        * CFrame.new(leanE * CONFIG.LeanDistance, -math.abs(leanE) * 0.1, 0)
+        * CFrame.Angles(0, 0, -math.rad(CONFIG.LeanAngle) * leanE)
+        * CFrame.Angles(ck.X, ck.Y, ck.Z)
+        * (fcT or ID)
+    cam.CFrame = camOut
+    S.lastBase, S.lastOut = base, camOut
+    cam.FieldOfView = S.baseFOV + 4 * spE - (S.baseFOV - CONFIG.AimFOV) * aimE + (P.fovKick or 0)
+
+    local gunHip, armL0, armR0
+    local pose
+    if animBody then
+        local B = R.body
+        local function bodyPose(b)
+            local T = b.m6.Transform
+            if isID(T) then return b.c0 * b.hipT * b.c1i end
+            return b.c0 * T:Lerp(ID, aimE) * b.c1i
+        end
+        gunHip = bodyPose(B.Grip)
+        armL0 = bodyPose(B["Left Arm"])
+        armR0 = bodyPose(B["Right Arm"])
+        pose = gunHip:Lerp(R.AIM, aimE)
+    else
+        pose = R.HIP:Lerp(R.AIM, aimE)
+    end
+    local lowE = math.max((animBody and A.ok.Sprint) and 0 or spE, (animBody and A.ok.HoldUp) and 0 or wallE)
+    if lowE > 0.001 then
+        pose = pose * CFrame.new(0.05 * lowE, -0.22 * lowE, 0.12 * lowE)
+            * CFrame.Angles(math.rad(-20) * lowE, math.rad(32) * lowE, math.rad(8) * lowE)
+    end
+    if P.tilt > 0.001 then
+        pose = pose * CFrame.new(-0.12 * P.tilt, 0.08 * P.tilt, 0.1 * P.tilt)
+            * CFrame.Angles(math.rad(15) * P.tilt, math.rad(8) * P.tilt, math.rad(14) * P.tilt)
+    end
+    if P.ins > 0.001 or P.ins2 > 0.001 then
+        pose = pose * CFrame.new(-0.4 * P.ins, 0.25 * P.ins, 0.3 * P.ins)
+            * CFrame.Angles(math.rad(8) * P.ins, math.rad(40) * P.ins, math.rad(-22) * P.ins)
+            * CFrame.Angles(0, math.rad(-45) * P.ins2, math.rad(18) * P.ins2)
+    end
+    if eqE < 0.999 then
+        local k = 1 - eqE
+        pose = CFrame.new(0.25 * k, -1.2 * k, 0.4 * k) * CFrame.Angles(math.rad(-30) * k, 0, 0) * pose
+    end
+    local kr, kp = kickRot.p, kickPos.p
+    local sp = sway.p
+    local Wr = camOut
+        * CFrame.Angles(sp.X, sp.Y, sp.Z)
+        * CFrame.new(bobPos.X, bobPos.Y, bobPos.Z)
+        * CFrame.Angles(bobRot.X, bobRot.Y, bobRot.Z)
+        * CFrame.new(kp.X, kp.Y, kp.Z)
+        * CFrame.Angles(kr.X, kr.Y, kr.Z)
+    local gcf = Wr * pose
+    local arms
+    if animBody then
+        local D = pose * gunHip:Inverse()
+        arms = { l = D * armL0, r = D * armR0 }
+    end
+    poseRig(gcf, camOut, Wr, arms)
+
+    if CONFIG.Automatic and S.trigger and now >= S.nextShot then pullTrigger() end
+
+    if CONFIG.HideCharacter then
+        if now - S.lastScan > 1 then
+            S.lastScan = now
+            rescanCharacter(char)
+        end
+        for _, p in ipairs(S.charParts) do p.LocalTransparencyModifier = 1 end
+    end
+    if UI.dot then UI.dot.Visible = aimE < 0.5 and not S.reloading end
+end
+
+local Destroy
+Destroy = function()
+    if not S.alive then return end
+    S.alive = false
+    pcall(function() RunService:UnbindFromRenderStep("RevolverFPS") end)
+    pcall(function() RunService:UnbindFromRenderStep("RevolverFPS_Pre") end)
+    for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
+    local cam = Workspace.CurrentCamera
+    if cam and S.baseFOV then cam.FieldOfView = S.baseFOV end
+    pcall(function()
+        if S.prevCameraMode then LocalPlayer.CameraMode = S.prevCameraMode end
+        local hum = getHum()
+        if hum then
+            hum.CameraOffset = Vector3.new(0, 0, 0)
+            if S.baseSpeed then hum.WalkSpeed = S.baseSpeed end
+        end
+        for _, p in ipairs(S.charParts) do p.LocalTransparencyModifier = 0 end
+    end)
+    pcall(function() if UI.gui then UI.gui:Destroy() end end)
+    pcall(function() if OB.gui then OB.gui:Destroy() end end)
+    pcall(function()
+        for _, tr in pairs(A.tracks) do tr:Stop(0) end
+    end)
+    pcall(function() if R and R.model then R.model:Destroy() end end)
+    pcall(function() if fxFolder then fxFolder:Destroy() end end)
+    if genv.RevolverFPS and genv.RevolverFPS.Destroy == Destroy then genv.RevolverFPS = nil end
+end
+
+local function Close()
+    if S.closing or not S.alive then return end
+    if A.on and A.ok.Unequip then
+        S.closing = true
+        S.trigger = false
+        A.loop("Sprint", false)
+        A.loop("HoldUp", false)
+        A.stop("Reload", 0.1); A.stop("Inspect", 0.1); A.stop("MagCheck", 0.1)
+        A.play("Unequip", 0.08)
+        sfx("AimDown")
+        task.delay(math.min(A.length("Unequip"), 1.6), function() Destroy() end)
+    else
+        Destroy()
+    end
+end
+
+local function main()
+    local missing = {}
+    for _, f in ipairs({ CONFIG.FileName, CONFIG.UIFileName, CONFIG.AnimFileName, CONFIG.ReloadAnimFile, CONFIG.InspectAnimFile }) do
+        if not ensureFile(f) then missing[#missing + 1] = f end
+    end
+    if #missing > 0 then
+        warn("[RevolverFPS] missing in workspace/" .. tostring(CONFIG.FileDir) .. ": " .. table.concat(missing, ", ")
+            .. " -> run your ORIGINAL script once (it writes these files), then run this one.")
+    end
+
+    local model, source = loadModel()
+    R = buildRig(model)
+
+    local char = LocalPlayer.Character
+    local function skin(side)
+        if char then
+            local p = char:FindFirstChild(side .. " Arm") or char:FindFirstChild(side .. "UpperArm") or char:FindFirstChild(side .. "Hand")
+            if p and p:IsA("BasePart") then return p.Color end
+        end
+        return Color3.fromRGB(245, 205, 175)
+    end
+    for _, side in ipairs({ "Left", "Right" }) do
+        local a = R.parts[side .. " Arm"]
+        a.Transparency = 0
+        a.Size = Vector3.new(CONFIG.ArmWidth, 2, CONFIG.ArmWidth)
+        a.Material = Enum.Material.SmoothPlastic
+        a.Color = skin(side)
+    end
+    R.parts.Grip.Transparency = 1
+    R.parts.AimPart.Transparency = 1
+    R.parts.AnimBase.Transparency = 1
+    R.parts.FakeCamera.Transparency = 1
+
+    fxFolder = Instance.new("Folder")
+    fxFolder.Name = "RevolverFPS_FX"
+    fxFolder.Parent = Workspace
+
+    refreshSlots()
+    S.baseFOV = (Workspace.CurrentCamera and Workspace.CurrentCamera.FieldOfView) or 70
+    if CONFIG.LockFirstPerson then
+        S.prevCameraMode = LocalPlayer.CameraMode
+        LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
+    end
+
+    DEVICE = detectDevice()
+    loadAnimations()
+    OB.load()
+    buildUI()
+    bindInput()
+
+    track(LocalPlayer.CharacterAdded:Connect(function(c)
+        S.charParts, S.baseSpeed, S.speedApplied, S.camOffsetSet = {}, nil, nil, false
+        S.aimOn, S.running, S.crouch, S.leanDir = false, false, false, 0
+        refreshButtons()
+        task.defer(function() if S.alive then playEquip(false) end end)
+    end))
+
+    R.model.Parent = Workspace.CurrentCamera
+    RunService:BindToRenderStep("RevolverFPS_Pre", Enum.RenderPriority.Camera.Value - 1, preCamera)
+    RunService:BindToRenderStep("RevolverFPS", Enum.RenderPriority.Camera.Value + 1, step)
+
+    genv.RevolverFPS = {
+        Destroy = Destroy, Close = Close, Reload = reload, Inspect = inspect, MagCheck = magCheck,
+        Shoot = pullTrigger, Config = CONFIG, Source = source,
+        Animations = A, OBUI = OB, Device = DEVICE,
+    }
+    refreshAmmoUI()
+    playEquip(true)
+end
+
+local ok, err = pcall(main)
+if not ok then
+    warn("[RevolverFPS] failed: " .. tostring(err))
+    pcall(Destroy)
+end
